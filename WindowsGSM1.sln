@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsGSM1", "WindowsGSM1\WindowsGSM1\WindowsGSM1.csproj", "{1B00F053-1380-4A83-8495-8E034D0CD918}"
 EndProject
-Project("{96E2B04D-8817-42C6-938A-82C39BA4D311}") = "WindowsGSM1Content", "WindowsGSM1\WindowsGSM1Content\WindowsGSM1Content.contentproj", "{F4074F00-ABF8-4BE5-A49F-28B2622D9165}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WindowsGSM1Content", "WindowsGSM1\WindowsGSM1Content\WindowsGSM1Content.contentproj", "{F4074F00-ABF8-4BE5-A49F-28B2622D9165}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -14,6 +14,7 @@ Global
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{1B00F053-1380-4A83-8495-8E034D0CD918}.Debug|Any CPU.ActiveCfg = Debug|x86
+		{1B00F053-1380-4A83-8495-8E034D0CD918}.Debug|Any CPU.Build.0 = Debug|x86
 		{1B00F053-1380-4A83-8495-8E034D0CD918}.Debug|x86.ActiveCfg = Debug|x86
 		{1B00F053-1380-4A83-8495-8E034D0CD918}.Debug|x86.Build.0 = Debug|x86
 		{1B00F053-1380-4A83-8495-8E034D0CD918}.Release|Any CPU.ActiveCfg = Release|x86
