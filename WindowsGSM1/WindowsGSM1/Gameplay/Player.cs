@@ -10,6 +10,7 @@
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Audio;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
@@ -19,7 +20,7 @@ namespace WindowsGSM1.Gameplay
     /// <summary>
     /// Our fearless adventurer!
     /// </summary>
-    public class Player : IFocusable
+    public class Player : GameObject, IFocusable
     {
         // Animations
         private Animation idleAnimation;
@@ -35,33 +36,12 @@ namespace WindowsGSM1.Gameplay
         private SoundEffect jumpSound;
         private SoundEffect fallSound;
 
-        public Level Level
-        {
-            get { return level; }
-        }
-        Level level;
-
         public bool IsAlive
         {
             get { return isAlive; }
         }
         bool isAlive;
 
-        // Physics state
-        public Vector2 Position
-        {
-            get { return position; }
-            set { position = value; }
-        }
-        Vector2 position;
-
-        private float previousBottom;
-
-        public Vector2 Velocity
-        {
-            get { return velocity; }
-            set { velocity = value; }
-        }
         Vector2 velocity;
 
         // Constants for controling horizontal movement
@@ -91,11 +71,7 @@ namespace WindowsGSM1.Gameplay
         /// <summary>
         /// Gets whether or not the player's feet are on the ground.
         /// </summary>
-        public bool IsOnGround
-        {
-            get { return isOnGround; }
-        }
-        bool isOnGround;
+        public bool IsOnGround { get; set; }
 
         /// <summary>
         /// Current user movement input.
@@ -107,61 +83,49 @@ namespace WindowsGSM1.Gameplay
         private bool wasJumping;
         private float jumpTime;
 
-        private Rectangle localBounds;
         private bool isFiring;
         private int direction = 1;
         private bool isThrowing;
 
 
         /// <summary>
-        /// Gets a rectangle which bounds this player in world space.
-        /// </summary>
-        public Rectangle BoundingRectangle
-        {
-            get
-            {
-                int left = (int)Math.Round(Position.X - sprite.Origin.X) + localBounds.X;
-                int top = (int)Math.Round(Position.Y - sprite.Origin.Y) + localBounds.Y;
-
-                return new Rectangle(left, top, localBounds.Width, localBounds.Height);
-            }
-        }
-
-        /// <summary>
         /// Constructors a new player.
         /// </summary>
-        public Player(Level level, Vector2 position)
+        public Player(Level level, Vector2 position) : base(level)
         {
-            this.level = level;
-
-            LoadContent();
+            LoadContent(level.Content);
 
             Reset(position);
+        }
+
+        protected override Vector2 Origin
+        {
+            get { return sprite.Origin; }
         }
 
         /// <summary>
         /// Loads the player sprite sheet and sounds.
         /// </summary>
-        public void LoadContent()
+        public override void LoadContent(ContentManager contentManager)
         {
             // Load animated textures.
-            idleAnimation = new Animation(Level.Content.Load<Texture2D>("Sprites/Player/Idle_armed2"), 0.2f, true);
-            runAnimation = new Animation(Level.Content.Load<Texture2D>("Sprites/Player/RunTestgun"), 0.1f, true);
-            jumpAnimation = new Animation(Level.Content.Load<Texture2D>("Sprites/Player/Jump"), 0.1f, false);
-            celebrateAnimation = new Animation(Level.Content.Load<Texture2D>("Sprites/Player/Celebrate"), 0.1f, false);
-            dieAnimation = new Animation(Level.Content.Load<Texture2D>("Sprites/Player/Die"), 0.1f, false);
+            idleAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Idle_armed2"), 0.2f, true);
+            runAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/RunTestgun"), 0.1f, true);
+            jumpAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Jump"), 0.1f, false);
+            celebrateAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Celebrate"), 0.1f, false);
+            dieAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Die"), 0.1f, false);
 
             // Calculate bounds within texture size.            
             int width = (int)(idleAnimation.FrameWidth * 0.4);
             int left = (idleAnimation.FrameWidth - width) / 2;
             int height = (int)(idleAnimation.FrameWidth * 0.8);
             int top = idleAnimation.FrameHeight - height;
-            localBounds = new Rectangle(left, top, width, height);
+            _localBounds = new Rectangle(left, top, width, height);
 
             // Load sounds.            
-            killedSound = Level.Content.Load<SoundEffect>("Sounds/PlayerKilled");
-            jumpSound = Level.Content.Load<SoundEffect>("Sounds/PlayerJump");
-            fallSound = Level.Content.Load<SoundEffect>("Sounds/PlayerFall");
+            killedSound = contentManager.Load<SoundEffect>("Sounds/PlayerKilled");
+            jumpSound = contentManager.Load<SoundEffect>("Sounds/PlayerJump");
+            fallSound = contentManager.Load<SoundEffect>("Sounds/PlayerFall");
         }
 
         /// <summary>
@@ -171,7 +135,7 @@ namespace WindowsGSM1.Gameplay
         public void Reset(Vector2 position)
         {
             Position = position;
-            Velocity = Vector2.Zero;
+            velocity = Vector2.Zero;
             isAlive = true;
             sprite.PlayAnimation(idleAnimation);
         }
@@ -184,9 +148,7 @@ namespace WindowsGSM1.Gameplay
         /// once per frame. We also pass the game's orientation because when using the accelerometer,
         /// we need to reverse our motion when the orientation is in the LandscapeRight orientation.
         /// </remarks>
-        public void Update(
-            GameTime gameTime,
-            KeyboardState keyboardState)
+        protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
         {
             GetInput(keyboardState);
 
@@ -195,7 +157,7 @@ namespace WindowsGSM1.Gameplay
 
             if (isFiring && ShotBuffer > ShotDelay)
             {
-                Level.CreateBullet(
+                _level.CreateBullet(
                     new Vector2 { X = Position.X + direction*30, Y = Position.Y - sprite.Animation.FrameHeight / 1.5f },
                     direction, gameTime);
                 ShotBuffer = 0;
@@ -211,7 +173,7 @@ namespace WindowsGSM1.Gameplay
                     }
                     else if (ThrowBuffer > ThrowDelay)
                     {
-                        TileBomb = Level.CreateTilebomb(
+                        TileBomb = _level.CreateTilebomb(
                             new Vector2 {X = Position.X + direction*10, Y = Position.Y - sprite.Animation.FrameHeight},
                             direction);
                         ThrowBuffer = 0;
@@ -223,7 +185,7 @@ namespace WindowsGSM1.Gameplay
 
             if (IsAlive && IsOnGround)
             {
-                if (Math.Abs(Velocity.X) - 0.02f > 0)
+                if (Math.Abs(velocity.X) - 0.02f > 0)
                 {
                     sprite.PlayAnimation(runAnimation);
                 }
@@ -238,6 +200,17 @@ namespace WindowsGSM1.Gameplay
             isJumping = false;
             isFiring = false;
             isThrowing = false;
+        }
+
+        protected override void HandleCollisionsInternal(CollisionCheckResult collisions)
+        {
+            IsOnGround = collisions.IsOnGround;
+            // If the collision stopped us from moving, reset the velocity to zero.
+            if (Position.X == collisions.PositionBeforeCheck.X)
+                velocity.X = 0;
+
+            if (Position.Y == collisions.PositionBeforeCheck.Y)
+                velocity.Y = 0;
         }
 
         protected TileBomb TileBomb { get; set; }
@@ -284,8 +257,6 @@ namespace WindowsGSM1.Gameplay
         {
             float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            Vector2 previousPosition = Position;
-
             // Base velocity is a combination of horizontal movement control and
             // acceleration downward due to gravity.
             velocity.X += movement * MoveAcceleration * elapsed;
@@ -305,16 +276,6 @@ namespace WindowsGSM1.Gameplay
             // Apply velocity.
             Position += velocity * elapsed;
             Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
-
-            // If the player is now colliding with the level, separate them.
-            HandleCollisions();
-
-            // If the collision stopped us from moving, reset the velocity to zero.
-            if (Position.X == previousPosition.X)
-                velocity.X = 0;
-
-            if (Position.Y == previousPosition.Y)
-                velocity.Y = 0;
         }
 
         /// <summary>
@@ -372,75 +333,6 @@ namespace WindowsGSM1.Gameplay
         }
 
         /// <summary>
-        /// Detects and resolves all collisions between the player and his neighboring
-        /// tiles. When a collision is detected, the player is pushed away along one
-        /// axis to prevent overlapping. There is some special logic for the Y axis to
-        /// handle platforms which behave differently depending on direction of movement.
-        /// </summary>
-        private void HandleCollisions()
-        {
-            // Get the player's bounding rectangle and find neighboring tiles.
-            Rectangle bounds = BoundingRectangle;
-            int leftTile = (int)Math.Floor((float)bounds.Left / Tile.Width);
-            int rightTile = (int)Math.Ceiling(((float)bounds.Right / Tile.Width)) - 1;
-            int topTile = (int)Math.Floor((float)bounds.Top / Tile.Height);
-            int bottomTile = (int)Math.Ceiling(((float)bounds.Bottom / Tile.Height)) - 1;
-
-            // Reset flag to search for ground collision.
-            isOnGround = false;
-
-            // For each potentially colliding tile,
-            for (int y = topTile; y <= bottomTile; ++y)
-            {
-                for (int x = leftTile; x <= rightTile; ++x)
-                {
-                    // If this tile is collidable,
-                    TileCollision collision = Level.GetCollision(x, y);
-                    if (collision != TileCollision.Passable)
-                    {
-                        // Determine collision depth (with direction) and magnitude.
-                        Rectangle tileBounds = Level.GetBounds(x, y);
-                        Vector2 depth = RectangleExtensions.GetIntersectionDepth(bounds, tileBounds);
-                        if (depth != Vector2.Zero)
-                        {
-                            float absDepthX = Math.Abs(depth.X);
-                            float absDepthY = Math.Abs(depth.Y);
-
-                            // Resolve the collision along the shallow axis.
-                            if (absDepthY < absDepthX || collision == TileCollision.Platform)
-                            {
-                                // If we crossed the top of a tile, we are on the ground.
-                                if (previousBottom <= tileBounds.Top)
-                                    isOnGround = true;
-
-                                // Ignore platforms, unless we are on the ground.
-                                if (collision == TileCollision.Impassable || IsOnGround)
-                                {
-                                    // Resolve the collision along the Y axis.
-                                    Position = new Vector2(Position.X, Position.Y + depth.Y);
-
-                                    // Perform further collisions with the new bounds.
-                                    bounds = BoundingRectangle;
-                                }
-                            }
-                            else if (collision == TileCollision.Impassable) // Ignore platforms.
-                            {
-                                // Resolve the collision along the X axis.
-                                Position = new Vector2(Position.X + depth.X, Position.Y);
-
-                                // Perform further collisions with the new bounds.
-                                bounds = BoundingRectangle;
-                            }
-                        }
-                    }
-                }
-            }
-
-            // Save the new bounds bottom.
-            previousBottom = bounds.Bottom;
-        }
-
-        /// <summary>
         /// Called when the player has been killed.
         /// </summary>
         /// <param name="killedBy">
@@ -470,12 +362,12 @@ namespace WindowsGSM1.Gameplay
         /// <summary>
         /// Draws the animated player.
         /// </summary>
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        public override void  Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             // Flip the sprite to face the way we are moving.
-            if (Velocity.X > 0)
+            if (velocity.X > 0)
                 flip = SpriteEffects.FlipHorizontally;
-            else if (Velocity.X < 0)
+            else if (velocity.X < 0)
                 flip = SpriteEffects.None;
 
             // Draw that sprite.

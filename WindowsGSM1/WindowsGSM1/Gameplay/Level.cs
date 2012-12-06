@@ -43,7 +43,7 @@ namespace WindowsGSM1.Gameplay
         private IExplosionMaster _explosionMaster;
 
         private List<Gem> gems = new List<Gem>();
-        private List<Enemy> enemies = new List<Enemy>();
+        private List<GameObject> gameObjects = new List<GameObject>();
         private List<IProjectile> projectiles = new List<IProjectile>();
 
         // Key locations in the level.        
@@ -310,7 +310,7 @@ namespace WindowsGSM1.Gameplay
         private Tile LoadEnemyTile(int x, int y, string spriteSet)
         {
             Vector2 position = RectangleExtensions.GetBottomCenter(GetBounds(x, y));
-            enemies.Add(new Enemy(this, position, spriteSet));
+            //enemies.Add(new Enemy(this, position, spriteSet));
 
             return new Tile(null, TileCollision.Passable,null);
         }
@@ -401,14 +401,7 @@ namespace WindowsGSM1.Gameplay
             GameTime gameTime,
             KeyboardState keyboardState)
         {
-            var hitProjectiles = projectiles.Where(b => b.Hit).ToArray();
-            //apply hit actions
-            Array.ForEach(hitProjectiles, h => h.OnHit());
-            //create explosions
-            Array.ForEach(hitProjectiles, h=>_explosionMaster.AddExplosion(h.Explosion,gameTime));
-
-            //remove hit projectiles
-            projectiles = projectiles.Except(hitProjectiles).ToList();
+            UpdateProjectiles(gameTime);
 
             // Pause while the player is dead or time is expired.
             if (!Player.IsAlive || TimeRemaining == TimeSpan.Zero)
@@ -434,7 +427,10 @@ namespace WindowsGSM1.Gameplay
                 if (Player.BoundingRectangle.Top >= Height * Tile.Height)
                     OnPlayerKilled();
 
-                UpdateBullets(gameTime);
+                foreach (var obj in gameObjects)
+                {
+                    obj.Update(gameTime,keyboardState);
+                }
 
                 // The player has reached the exit if they are standing on the ground and
                 // his bounding rectangle contains the center of the exit tile. They can only
@@ -450,6 +446,18 @@ namespace WindowsGSM1.Gameplay
             // Clamp the time remaining at zero.
             if (timeRemaining < TimeSpan.Zero)
                 timeRemaining = TimeSpan.Zero;
+        }
+
+        private void UpdateProjectiles(GameTime gameTime)
+        {
+            var hitProjectiles = projectiles.Where(b => b.Hit).ToArray();
+            //apply hit actions
+            Array.ForEach(hitProjectiles, h => h.OnHit());
+            //create explosions
+            Array.ForEach(hitProjectiles, h => _explosionMaster.AddExplosion(h.Explosion, gameTime));
+
+            //remove hit projectiles
+            projectiles = projectiles.Except(hitProjectiles).ToList();
         }
 
         /// <summary>
@@ -476,15 +484,7 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         private void UpdateBullets(GameTime gameTime)
         {
-            foreach (var bullet in projectiles)
-            {
-                bullet.Update(gameTime);
-
-                if (bullet.Source!="Player" && bullet.BoundingRectangle.Intersects(Player.BoundingRectangle))
-                {
-                    bullet.OnPlayerHit();
-                }
-            }
+            
         }
 
         /// <summary>
@@ -545,9 +545,9 @@ namespace WindowsGSM1.Gameplay
 
             Player.Draw(gameTime, spriteBatch);
 
-            foreach (var bullet in projectiles)
+            foreach (var obj in gameObjects)
             {
-                bullet.Draw(gameTime, spriteBatch);
+                obj.Draw(gameTime, spriteBatch);
             }
 
         }
@@ -587,6 +587,7 @@ namespace WindowsGSM1.Gameplay
         public TileBomb CreateTilebomb(Vector2 vector2, int direction)
         {
             var bomb = new TileBomb(this, vector2, direction);
+            gameObjects.Add(bomb);
             projectiles.Add(bomb);
 
             return bomb;

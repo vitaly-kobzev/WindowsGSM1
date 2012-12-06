@@ -12,17 +12,10 @@ namespace WindowsGSM1.Gameplay
         bool Hit { get; }
         Texture2D HitTexture { get; }
 
-        void Draw(GameTime gameTime, SpriteBatch spriteBatch);
-
-        void Update(GameTime gameTime);
-
         string Source { get; }
 
-        Rectangle BoundingRectangle { get; }
-
-        Vector2 Position { get; }
-
         Action OnPlayerHit { get; set; }
+
         ExplosionData Explosion { get; }
 
         void OnHit();

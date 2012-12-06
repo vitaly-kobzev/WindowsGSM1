@@ -73,6 +73,7 @@
     <Compile Include="Gameplay\Circle.cs" />
     <Compile Include="Gameplay\Enemy.cs" />
     <Compile Include="Gameplay\ExplosionData.cs" />
+    <Compile Include="Gameplay\GameObject.cs" />
     <Compile Include="Gameplay\Gem.cs" />
     <Compile Include="Gameplay\IProjectile.cs" />
     <Compile Include="Gameplay\Level.cs" />
