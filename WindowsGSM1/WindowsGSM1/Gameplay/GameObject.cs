@@ -15,15 +15,19 @@ namespace WindowsGSM1.Gameplay
     /// </summary>
     public abstract class GameObject
     {
+
         protected Texture2D _texture;
 
         protected Rectangle _localBounds;
 
-        protected Rectangle _previousBounds;
-
         protected Level _level;
 
+        // Physics state
         public Vector2 Position { get; set; }
+
+        private Vector2 _positionBeforeUpdate;
+
+        private Rectangle _previousBounds;
 
         protected GameObject(Level level)
         {
@@ -49,12 +53,27 @@ namespace WindowsGSM1.Gameplay
 
         protected abstract void HandleCollisionsInternal(CollisionCheckResult collisions);
 
-        public abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);
+        protected abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);
+
+        public void Draw(GameTime gameTime, SpriteBatch spriteBatch, bool debugMode)
+        {
+            if (debugMode)
+            {
+                var rectTex = new Texture2D(_level.GraphicsDevice, 1, 1);
+                rectTex.SetData(new[] { Color.Red });
+
+                spriteBatch.Draw(rectTex, BoundingRectangle, Color.Red);
+            }
+
+            Draw(gameTime,spriteBatch);
+        }
 
         public void Update(GameTime gameTime, KeyboardState keyboardState)
         {
             //flow of update is:
             //do any kind of adjustments
+            _positionBeforeUpdate = Position;
+
             UpdateInternal(gameTime, keyboardState);
             //do collision check
             var collisions = DoCollisionCheck();
@@ -64,7 +83,7 @@ namespace WindowsGSM1.Gameplay
 
         protected virtual CollisionCheckResult DoCollisionCheck()
         {
-            var result = new CollisionCheckResult {PositionBeforeCheck = Position};
+            var result = new CollisionCheckResult {PositionBeforeCheck = _positionBeforeUpdate};
             // Get the player's bounding rectangle and find neighboring tiles.
             Rectangle bounds = BoundingRectangle;
             int leftTile = (int)Math.Floor((float)bounds.Left / Tile.Width);
@@ -93,14 +112,13 @@ namespace WindowsGSM1.Gameplay
                             float absDepthY = Math.Abs(depth.Y);
 
                             // Resolve the collision along the shallow axis.
-                            if (absDepthY < absDepthX || collision == TileCollision.Platform)
+                            if (absDepthY < absDepthX)
                             {
                                 // If we crossed the top of a tile, we are on the ground.
                                 if (_previousBounds.Bottom <= tileBounds.Top)
                                     isOnGround = true;
 
-                                // Ignore platforms, unless we are on the ground.
-                                if (collision == TileCollision.Impassable || isOnGround)
+                                if (isOnGround)
                                 {
                                     // Resolve the collision along the Y axis.
                                     Position = new Vector2(Position.X, Position.Y + depth.Y);
@@ -111,7 +129,7 @@ namespace WindowsGSM1.Gameplay
                                     result.HitImpassable = true;
                                 }
                             }
-                            else if (collision == TileCollision.Impassable) // Ignore platforms.
+                            else 
                             {
                                 // Resolve the collision along the X axis.
                                 Position = new Vector2(Position.X + depth.X, Position.Y);

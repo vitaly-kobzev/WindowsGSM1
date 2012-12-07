@@ -109,7 +109,7 @@ namespace WindowsGSM1.Gameplay
         public override void LoadContent(ContentManager contentManager)
         {
             // Load animated textures.
-            idleAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Idle_armed2"), 0.2f, true);
+            idleAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Idle"), 0.2f, true);
             runAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/RunTestgun"), 0.1f, true);
             jumpAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Jump"), 0.1f, false);
             celebrateAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Celebrate"), 0.1f, false);
@@ -118,7 +118,7 @@ namespace WindowsGSM1.Gameplay
             // Calculate bounds within texture size.            
             int width = (int)(idleAnimation.FrameWidth * 0.4);
             int left = (idleAnimation.FrameWidth - width) / 2;
-            int height = (int)(idleAnimation.FrameWidth * 0.8);
+            int height = (int)(idleAnimation.FrameHeight * 0.8);
             int top = idleAnimation.FrameHeight - height;
             _localBounds = new Rectangle(left, top, width, height);
 
@@ -182,6 +182,18 @@ namespace WindowsGSM1.Gameplay
             }
            
             ApplyPhysics(gameTime);
+        }
+
+        protected override void HandleCollisionsInternal(CollisionCheckResult collisions)
+        {
+            IsOnGround = collisions.IsOnGround;
+
+            // If the collision stopped us from moving, reset the velocity to zero.
+            if (Position.X == collisions.PositionBeforeCheck.X)
+                velocity.X = 0;
+
+            if (Position.Y == collisions.PositionBeforeCheck.Y)
+                velocity.Y = 0;
 
             if (IsAlive && IsOnGround)
             {
@@ -200,17 +212,6 @@ namespace WindowsGSM1.Gameplay
             isJumping = false;
             isFiring = false;
             isThrowing = false;
-        }
-
-        protected override void HandleCollisionsInternal(CollisionCheckResult collisions)
-        {
-            IsOnGround = collisions.IsOnGround;
-            // If the collision stopped us from moving, reset the velocity to zero.
-            if (Position.X == collisions.PositionBeforeCheck.X)
-                velocity.X = 0;
-
-            if (Position.Y == collisions.PositionBeforeCheck.Y)
-                velocity.Y = 0;
         }
 
         protected TileBomb TileBomb { get; set; }
@@ -362,7 +363,7 @@ namespace WindowsGSM1.Gameplay
         /// <summary>
         /// Draws the animated player.
         /// </summary>
-        public override void  Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        protected override void  Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             // Flip the sprite to face the way we are moving.
             if (velocity.X > 0)

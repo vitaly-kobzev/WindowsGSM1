@@ -31,6 +31,8 @@ namespace WindowsGSM1.Gameplay
         public Tile[,] tiles;
         private Texture2D[] layers;
 
+        public GraphicsDevice GraphicsDevice { get; set; }
+
         // Entities in the level.
         public Player Player
         {
@@ -98,6 +100,8 @@ namespace WindowsGSM1.Gameplay
         {
             // Create a new content manager to load content used just by this level.
             content = new ContentManager(serviceProvider, "Content");
+
+            
 
             _explosionMaster = explosionMaster;
 
@@ -539,15 +543,14 @@ namespace WindowsGSM1.Gameplay
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             DrawTiles(spriteBatch);
-
             foreach (Gem gem in gems)
                 gem.Draw(gameTime, spriteBatch);
 
-            Player.Draw(gameTime, spriteBatch);
+            Player.Draw(gameTime, spriteBatch, false);
 
             foreach (var obj in gameObjects)
             {
-                obj.Draw(gameTime, spriteBatch);
+                obj.Draw(gameTime, spriteBatch, false);
             }
 
         }

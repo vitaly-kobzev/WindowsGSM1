@@ -112,6 +112,7 @@ namespace WindowsGSM1
             using (Stream fileStream = TitleContainer.OpenStream(levelPath))
             {
                 level = new Level(ScreenManager.Game.Services, fileStream,_particleEngine);
+                level.GraphicsDevice = ScreenManager.GraphicsDevice;
                 _camera = new Camera2D(ScreenManager.Game, level);
                 _camera.Focus = level.Player;
             }

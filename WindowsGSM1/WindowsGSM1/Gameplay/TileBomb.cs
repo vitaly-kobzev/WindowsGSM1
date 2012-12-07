@@ -85,6 +85,13 @@ namespace WindowsGSM1.Gameplay
             LoadContent(level.Content);
 
             _origin = new Vector2(_texture.Width / 2.0f, _texture.Height);
+
+            int width = (int)(_texture.Width * 0.4);
+            int left = (_texture.Width - width) / 2;
+            int height = (int)(_texture.Height * 0.8);
+            int top = _texture.Height - height;
+
+            _localBounds = new Rectangle(left,top,width,height);
         }
 
         protected override Vector2 Origin
@@ -149,7 +156,7 @@ namespace WindowsGSM1.Gameplay
             return velocityY;
         }
 
-        public override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        protected override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             // Calculate the source rectangle of the current frame.
             var origin = new Vector2(12,12);
