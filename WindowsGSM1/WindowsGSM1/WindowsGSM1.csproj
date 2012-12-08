@@ -76,7 +76,9 @@
     <Compile Include="Gameplay\GameObject.cs" />
     <Compile Include="Gameplay\Gem.cs" />
     <Compile Include="Gameplay\IProjectile.cs" />
+    <Compile Include="Gameplay\Engine.cs" />
     <Compile Include="Gameplay\Level.cs" />
+    <Compile Include="Gameplay\MovableGameObject.cs" />
     <Compile Include="Gameplay\Particles.cs" />
     <Compile Include="Gameplay\Player.cs" />
     <Compile Include="Gameplay\RectangleExtensions.cs" />

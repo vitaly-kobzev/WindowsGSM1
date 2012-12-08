@@ -13,71 +13,30 @@ namespace WindowsGSM1.Gameplay
     /// base class containing common properties
     /// all objects in the game should be descendants of this
     /// </summary>
-    public abstract class GameObject
+    public abstract class MovableGameObject : GameObject
     {
-
-        protected Texture2D _texture;
-
-        protected Rectangle _localBounds;
-
-        protected Level _level;
-
-        // Physics state
-        public Vector2 Position { get; set; }
 
         private Vector2 _positionBeforeUpdate;
 
         private Rectangle _previousBounds;
 
-        protected GameObject(Level level)
-        {
-            _level = level;
-        }
-
-        public Rectangle BoundingRectangle
-        {
-            get
-            {
-                int left = (int)Math.Round(Position.X - Origin.X) + _localBounds.X;
-                int top = (int)Math.Round(Position.Y - Origin.Y) + _localBounds.Y;
-
-                return new Rectangle(left, top, _localBounds.Width, _localBounds.Height);
-            }
-        }
-
-        protected abstract Vector2 Origin { get; }
-
-        public abstract void LoadContent(ContentManager contentManager);
+        protected MovableGameObject(Engine engine) : base(engine)
+        {}
 
         protected abstract void UpdateInternal(GameTime gameTime, KeyboardState keyboardState);
 
         protected abstract void HandleCollisionsInternal(CollisionCheckResult collisions);
 
-        protected abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);
-
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch, bool debugMode)
-        {
-            if (debugMode)
-            {
-                var rectTex = new Texture2D(_level.GraphicsDevice, 1, 1);
-                rectTex.SetData(new[] { Color.Red });
-
-                spriteBatch.Draw(rectTex, BoundingRectangle, Color.Red);
-            }
-
-            Draw(gameTime,spriteBatch);
-        }
-
-        public void Update(GameTime gameTime, KeyboardState keyboardState)
+        public override void Update(GameTime gameTime, KeyboardState keyboardState)
         {
             //flow of update is:
-            //do any kind of adjustments
+            //save initial position
             _positionBeforeUpdate = Position;
-
+            //do any kind of adjustments
             UpdateInternal(gameTime, keyboardState);
             //do collision check
             var collisions = DoCollisionCheck();
-            //handle collisions in a custom way
+            //let collisions to be handled in a custom way
             HandleCollisionsInternal(collisions);
         }
 
@@ -100,11 +59,11 @@ namespace WindowsGSM1.Gameplay
                 for (int x = leftTile; x <= rightTile; ++x)
                 {
                     // If this tile is collidable,
-                    TileCollision collision = _level.GetCollision(x, y);
+                    TileCollision collision = _engine.GetCollision(x, y);
                     if (collision != TileCollision.Passable)
                     {
                         // Determine collision depth (with direction) and magnitude.
-                        Rectangle tileBounds = _level.GetBounds(x, y);
+                        Rectangle tileBounds = _engine.GetBounds(x, y);
                         Vector2 depth = RectangleExtensions.GetIntersectionDepth(bounds, tileBounds);
                         if (depth != Vector2.Zero)
                         {
@@ -118,16 +77,13 @@ namespace WindowsGSM1.Gameplay
                                 if (_previousBounds.Bottom <= tileBounds.Top)
                                     isOnGround = true;
 
-                                if (isOnGround)
-                                {
-                                    // Resolve the collision along the Y axis.
-                                    Position = new Vector2(Position.X, Position.Y + depth.Y);
+                                // Resolve the collision along the Y axis.
+                                Position = new Vector2(Position.X, Position.Y + depth.Y);
 
-                                    // Perform further collisions with the new bounds.
-                                    bounds = BoundingRectangle;
+                                // Perform further collisions with the new bounds.
+                                bounds = BoundingRectangle;
 
-                                    result.HitImpassable = true;
-                                }
+                                result.HitImpassable = true;
                             }
                             else 
                             {
