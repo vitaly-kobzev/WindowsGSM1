@@ -46,7 +46,6 @@ namespace WindowsGSM1
 
         #region Properties
 
-
         /// <summary>
         /// A default SpriteBatch shared by all the screens. This saves
         /// each screen having to bother creating their own local instance.
@@ -56,7 +55,6 @@ namespace WindowsGSM1
             get { return spriteBatch; }
         }
 
-
         /// <summary>
         /// A default font shared by all the screens. This saves
         /// each screen having to bother loading their own local copy.
@@ -65,7 +63,6 @@ namespace WindowsGSM1
         {
             get { return font; }
         }
-
 
         /// <summary>
         /// If true, the manager prints out a list of all the screens
@@ -78,11 +75,9 @@ namespace WindowsGSM1
             set { traceEnabled = value; }
         }
 
-
         #endregion
 
         #region Initialization
-
 
         /// <summary>
         /// Constructs a new screen manager component.
@@ -246,6 +241,7 @@ namespace WindowsGSM1
             if (isInitialized)
             {
                 screen.LoadContent();
+                screen.Initialize();
             }
 
             screens.Add(screen);

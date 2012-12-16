@@ -1,4 +1,6 @@
-﻿using Microsoft.Xna.Framework;
+﻿using System;
+using System.Diagnostics;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
 namespace WindowsGSM1.Gameplay
@@ -157,7 +159,10 @@ namespace WindowsGSM1.Gameplay
             _position.X += (Focus.Position.X - Position.X) * MoveSpeed * delta;
             _position.Y += (Focus.Position.Y - Position.Y) * MoveSpeed * delta;
 
-            ApplyBoundaries();
+            //_position.X = (Focus.Position.X);
+            //_position.Y = (Focus.Position.Y);
+
+            //ApplyBoundaries();
 
             _titleSafeArea.X = (int)(_position.X - ScreenCenter.X+10);
             _titleSafeArea.Y = (int)(_position.Y - ScreenCenter.Y+10);

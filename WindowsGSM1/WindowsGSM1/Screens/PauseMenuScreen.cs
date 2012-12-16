@@ -21,12 +21,10 @@ namespace WindowsGSM1
     {
         #region Initialization
 
-
         /// <summary>
         /// Constructor.
         /// </summary>
         public PauseMenuScreen()
-            : base("Paused")
         {
             // Create our menu entries.
             MenuEntry resumeGameMenuEntry = new MenuEntry("Resume Game");
@@ -44,8 +42,17 @@ namespace WindowsGSM1
 
         #endregion
 
-        #region Handle Input
+        protected override string Title
+        {
+            get { return "Paused"; }
+        }
 
+        protected override bool BackButtonAvailable
+        {
+            get { return true; }
+        }
+
+        #region Handle Input
 
         /// <summary>
         /// Event handler for when the Quit Game menu entry is selected.
@@ -72,7 +79,6 @@ namespace WindowsGSM1
             LoadingScreen.Load(ScreenManager, false, null, new BackgroundScreen(),
                                                            new MainMenuScreen());
         }
-
 
         #endregion
     }
