@@ -40,7 +40,7 @@ namespace WindowsGSM1
         private Texture2D loseOverlay;
         private Texture2D diedOverlay;
 
-        private Level level;
+        private Engine level;
 
         private ParticleEngine _particleEngine;
 
@@ -111,7 +111,7 @@ namespace WindowsGSM1
             string levelPath = string.Format("Content/Levels/{0}.txt", 0);
             using (Stream fileStream = TitleContainer.OpenStream(levelPath))
             {
-                level = new Level(ScreenManager.Game.Services, fileStream,_particleEngine);
+                level = new Engine(ScreenManager.Game.Services, fileStream,_particleEngine);
                 level.GraphicsDevice = ScreenManager.GraphicsDevice;
                 _camera = new Camera2D(ScreenManager.Game, level);
                 _camera.Focus = level.Player;

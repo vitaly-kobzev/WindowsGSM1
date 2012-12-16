@@ -20,7 +20,7 @@ namespace WindowsGSM1.Gameplay
     /// <summary>
     /// Our fearless adventurer!
     /// </summary>
-    public class Player : GameObject, IFocusable
+    public class Player : MovableGameObject, IFocusable
     {
         // Animations
         private Animation idleAnimation;
@@ -91,9 +91,9 @@ namespace WindowsGSM1.Gameplay
         /// <summary>
         /// Constructors a new player.
         /// </summary>
-        public Player(Level level, Vector2 position) : base(level)
+        public Player(Engine engine, Vector2 position) : base(engine)
         {
-            LoadContent(level.Content);
+            LoadContent(engine.Content);
 
             Reset(position);
         }
@@ -109,7 +109,7 @@ namespace WindowsGSM1.Gameplay
         public override void LoadContent(ContentManager contentManager)
         {
             // Load animated textures.
-            idleAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Idle"), 0.2f, true);
+            idleAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Idle_armed2"), 0.2f, true);
             runAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/RunTestgun"), 0.1f, true);
             jumpAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Jump"), 0.1f, false);
             celebrateAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Celebrate"), 0.1f, false);
@@ -157,7 +157,7 @@ namespace WindowsGSM1.Gameplay
 
             if (isFiring && ShotBuffer > ShotDelay)
             {
-                _level.CreateBullet(
+                _engine.CreateBullet(
                     new Vector2 { X = Position.X + direction*30, Y = Position.Y - sprite.Animation.FrameHeight / 1.5f },
                     direction, gameTime);
                 ShotBuffer = 0;
@@ -173,7 +173,7 @@ namespace WindowsGSM1.Gameplay
                     }
                     else if (ThrowBuffer > ThrowDelay)
                     {
-                        TileBomb = _level.CreateTilebomb(
+                        TileBomb = _engine.CreateTilebomb(
                             new Vector2 {X = Position.X + direction*10, Y = Position.Y - sprite.Animation.FrameHeight},
                             direction);
                         ThrowBuffer = 0;

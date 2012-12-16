@@ -27,11 +27,11 @@ namespace WindowsGSM1.Gameplay
     /// </summary>
     public class Enemy
     {
-        public Level Level
+        public Engine Level
         {
             get { return level; }
         }
-        Level level;
+        Engine level;
 
         /// <summary>
         /// Position in world space of the bottom center of this enemy.
@@ -85,7 +85,7 @@ namespace WindowsGSM1.Gameplay
         /// <summary>
         /// Constructs a new Enemy.
         /// </summary>
-        public Enemy(Level level, Vector2 position, string spriteSet)
+        public Enemy(Engine level, Vector2 position, string spriteSet)
         {
             this.level = level;
             this.position = position;

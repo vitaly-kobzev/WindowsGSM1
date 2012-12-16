@@ -1,125 +1,109 @@
-﻿#region File Description
-//-----------------------------------------------------------------------------
-// Level.cs
-//
-// Microsoft XNA Community Game Platform
-// Copyright (C) Microsoft Corporation. All rights reserved.
-//-----------------------------------------------------------------------------
-#endregion
-
-using System;
+﻿using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Audio;
-using System.IO;
-using System.Linq;
-using Microsoft.Xna.Framework.Input.Touch;
-using Microsoft.Xna.Framework.Input;
 
 namespace WindowsGSM1.Gameplay
 {
-    /// <summary>
-    /// A uniform grid of tiles with collections of gems and enemies.
-    /// The level owns the player and controls the game's win and lose
-    /// conditions as well as scoring.
-    /// </summary>
-    public class Level : IDisposable
+    public class Level
     {
+        private ContentManager _content;
+
+
         // Physical structure of the level.
-        public Tile[,] tiles;
-        private Texture2D[] layers;
-
-        public GraphicsDevice GraphicsDevice { get; set; }
-
-        // Entities in the level.
-        public Player Player
-        {
-            get { return player; }
-        }
-        Player player;
-
-        public EventHandler<EventArgs> PlayerSpawned;
-
-        private IExplosionMaster _explosionMaster;
-
-        private List<Gem> gems = new List<Gem>();
-        private List<GameObject> gameObjects = new List<GameObject>();
-        private List<IProjectile> projectiles = new List<IProjectile>();
-
-        // Key locations in the level.        
-        private Vector2 start;
-        private Point exit = InvalidPosition;
-        private static readonly Point InvalidPosition = new Point(-1, -1);
+        private Tile[,] _tiles;
 
         // Level game state.
-        private Random random = new Random(354668); // Arbitrary, but constant seed
+        private Random _random = new Random(354668); // Arbitrary, but constant seed
 
-        public int Score
+        // Key locations in the level.        
+        private Vector2 _start;
+        private Point _exit = InvalidPosition;
+        private static readonly Point InvalidPosition = new Point(-1, -1);
+
+        public Level(ContentManager content)
         {
-            get { return score; }
+            _content = content;
         }
-        int score;
-
-        public bool ReachedExit
-        {
-            get { return reachedExit; }
-        }
-        bool reachedExit;
-
-        public TimeSpan TimeRemaining
-        {
-            get { return timeRemaining; }
-        }
-        TimeSpan timeRemaining;
-
-        private const int PointsPerSecond = 5;
-
-        // Level content.        
-        public ContentManager Content
-        {
-            get { return content; }
-        }
-        ContentManager content;
-
-        private SoundEffect exitReachedSound;
-
-        #region Loading
 
         /// <summary>
-        /// Constructs a new level.
+        /// Width of level measured in tiles.
         /// </summary>
-        /// <param name="serviceProvider">
-        /// The service provider that will be used to construct a ContentManager.
-        /// </param>
-        /// <param name="fileStream">
-        /// A stream containing the tile data.
-        /// </param>
-        public Level(IServiceProvider serviceProvider, Stream fileStream, IExplosionMaster explosionMaster)
+        public int Width
         {
-            // Create a new content manager to load content used just by this level.
-            content = new ContentManager(serviceProvider, "Content");
-
-            
-
-            _explosionMaster = explosionMaster;
-
-            timeRemaining = TimeSpan.FromMinutes(2.0);
-
-            LoadTiles(fileStream);
-
-            // Load background layer textures. For now, all levels must
-            // use the same backgrounds and only use the left-most part of them.
-            layers = new Texture2D[2];
-            for (int i = 0; i < layers.Length; ++i)
-            {
-                layers[i] = Content.Load<Texture2D>("Backgrounds/Layer" + i + "_0");
-            }
-
-            // Load sounds.
-            exitReachedSound = Content.Load<SoundEffect>("Sounds/ExitReached");
+            get { return _tiles.GetLength(0); }
         }
+
+        /// <summary>
+        /// Height of the level measured in tiles.
+        /// </summary>
+        public int Height
+        {
+            get { return _tiles.GetLength(1); }
+        }
+
+        /// <summary>
+        /// Gets the collision mode of the tile at a particular location.
+        /// This method handles tiles outside of the levels boundries by making it
+        /// impossible to escape past the left or right edges, but allowing things
+        /// to jump beyond the top of the level and fall off the bottom.
+        /// </summary>
+        public TileCollision GetCollision(int x, int y)
+        {
+            // Prevent escaping past the level ends.
+            if (x < 0 || x >= Width)
+                return TileCollision.Impassable;
+            // Allow jumping past the level top and falling through the bottom.
+            if (y < 0 || y >= Height)
+                return TileCollision.Passable;
+
+            return _tiles[x, y].Collision;
+        }
+
+        /// <summary>
+        /// Draws each tile in the level.
+        /// </summary>
+        public void DrawTiles(SpriteBatch spriteBatch)
+        {
+            // For each tile position
+            for (int y = 0; y < Height; ++y)
+            {
+                for (int x = 0; x < Width; ++x)
+                {
+                    // If there is a visible tile in that position
+                    Texture2D texture = _tiles[x, y].Texture;
+                    if (texture != null && !_tiles[x, y].Dead)
+                    {
+                        // Draw it in screen space.
+                        Vector2 position = new Vector2(x, y) * Tile.Size;
+                        spriteBatch.Draw(texture, position, Color.White);
+                    }
+                }
+            }
+        }
+
+        public IHittable GetHitVictim(int x, int y)
+        {
+            if ((x < 0 || x >= Width) || (y < 0 || y >= Height))
+            {
+                return null;
+            }
+            return _tiles[x, y];
+        }
+
+        /// <summary>
+        /// Gets the bounding rectangle of a tile in world space.
+        /// </summary>        
+        public Rectangle GetBounds(int x, int y)
+        {
+            return new Rectangle(x * Tile.Width, y * Tile.Height, Tile.Width, Tile.Height);
+        }
+
+        #region Loading
 
         /// <summary>
         /// Iterates over every tile in the structure file and loads its
@@ -148,7 +132,7 @@ namespace WindowsGSM1.Gameplay
             }
 
             // Allocate the tile grid.
-            tiles = new Tile[width, lines.Count];
+            _tiles = new Tile[width, lines.Count];
 
             // Loop over every tile position,
             for (int y = 0; y < Height; ++y)
@@ -157,15 +141,15 @@ namespace WindowsGSM1.Gameplay
                 {
                     // to load each tile.
                     char tileType = lines[y][x];
-                    tiles[x, y] = LoadTile(tileType, x, y);
+                    _tiles[x, y] = LoadTile(tileType, x, y);
                 }
             }
 
             // Verify that the level has a beginning and an end.
-            if (Player == null)
-                throw new NotSupportedException("A level must have a starting point.");
-            if (exit == InvalidPosition)
-                throw new NotSupportedException("A level must have an exit.");
+            //if (Player == null)
+            //throw new NotSupportedException("A level must have a starting point.");
+            //if (exit == InvalidPosition)
+            // throw new NotSupportedException("A level must have an exit.");
 
         }
 
@@ -189,7 +173,7 @@ namespace WindowsGSM1.Gameplay
             {
                 // Blank space
                 case '.':
-                    return new Tile(null, TileCollision.Passable,null);
+                    return new Tile(null, TileCollision.Passable, null);
 
                 // Exit
                 case 'X':
@@ -248,9 +232,53 @@ namespace WindowsGSM1.Gameplay
         /// <returns>The new tile.</returns>
         private Tile LoadTile(string name, TileCollision collision)
         {
-            return new Tile(Content.Load<Texture2D>("Tiles/" + name), collision, Content.Load<Texture2D>("Sprites/wallhit"));
+            return new Tile(_content.Load<Texture2D>("Tiles/" + name), collision, _content.Load<Texture2D>("Sprites/wallhit"));
         }
 
+        /// <summary>
+        /// Instantiates an enemy and puts him in the level.
+        /// </summary>
+        private Tile LoadEnemyTile(int x, int y, string spriteSet)
+        {
+            Vector2 position = RectangleExtensions.GetBottomCenter(GetBounds(x, y));
+            //enemies.Add(new Enemy(this, position, spriteSet));
+
+            return new Tile(null, TileCollision.Passable, null);
+        }
+
+        /// <summary>
+        /// Instantiates a gem and puts it in the level.
+        /// </summary>
+        private Tile LoadGemTile(int x, int y)
+        {
+            Point position = GetBounds(x, y).Center;
+            gems.Add(new Gem(this, new Vector2(position.X, position.Y)));
+
+            return new Tile(null, TileCollision.Passable, null);
+        }
+
+        /// <summary>
+        /// Remembers the location of the level's exit.
+        /// </summary>
+        private Tile LoadExitTile(int x, int y)
+        {
+            if (_exit != InvalidPosition)
+                throw new NotSupportedException("A level may only have one exit.");
+
+            _exit = GetBounds(x, y).Center;
+
+            return LoadTile("Exit", TileCollision.Passable);
+        }
+
+        /// <summary>
+        /// Instantiates a player, puts him in the level, and remembers where to put him when he is resurrected.
+        /// </summary>
+        private Tile LoadStartTile(int x, int y)
+        {
+            _start = RectangleExtensions.GetBottomCenter(GetBounds(x, y));
+
+            return new Tile(null, TileCollision.Passable, null);
+        }
 
         /// <summary>
         /// Loads a tile with a random appearance.
@@ -264,336 +292,10 @@ namespace WindowsGSM1.Gameplay
         /// </param>
         private Tile LoadVarietyTile(string baseName, int variationCount, TileCollision collision)
         {
-            int index = random.Next(variationCount);
+            int index = _random.Next(variationCount);
             return LoadTile(baseName + index, collision);
-        }
-
-
-        /// <summary>
-        /// Instantiates a player, puts him in the level, and remembers where to put him when he is resurrected.
-        /// </summary>
-        private Tile LoadStartTile(int x, int y)
-        {
-            if (Player != null)
-                throw new NotSupportedException("A level may only have one starting point.");
-
-            start = RectangleExtensions.GetBottomCenter(GetBounds(x, y));
-            SpawnPlayer();
-
-            return new Tile(null, TileCollision.Passable,null);
-        }
-
-        private void SpawnPlayer()
-        {
-            player = new Player(this, start);
-            FirePlayerSpawned();
-        }
-
-        private void FirePlayerSpawned()
-        {
-            if (PlayerSpawned != null)
-                PlayerSpawned(this,new EventArgs());
-        }
-
-        /// <summary>
-        /// Remembers the location of the level's exit.
-        /// </summary>
-        private Tile LoadExitTile(int x, int y)
-        {
-            if (exit != InvalidPosition)
-                throw new NotSupportedException("A level may only have one exit.");
-
-            exit = GetBounds(x, y).Center;
-
-            return LoadTile("Exit", TileCollision.Passable);
-        }
-
-        /// <summary>
-        /// Instantiates an enemy and puts him in the level.
-        /// </summary>
-        private Tile LoadEnemyTile(int x, int y, string spriteSet)
-        {
-            Vector2 position = RectangleExtensions.GetBottomCenter(GetBounds(x, y));
-            //enemies.Add(new Enemy(this, position, spriteSet));
-
-            return new Tile(null, TileCollision.Passable,null);
-        }
-
-        /// <summary>
-        /// Instantiates a gem and puts it in the level.
-        /// </summary>
-        private Tile LoadGemTile(int x, int y)
-        {
-            Point position = GetBounds(x, y).Center;
-            gems.Add(new Gem(this, new Vector2(position.X, position.Y)));
-
-            return new Tile(null, TileCollision.Passable,null);
-        }
-
-        /// <summary>
-        /// Unloads the level content.
-        /// </summary>
-        public void Dispose()
-        {
-            Content.Unload();
-        }
-
+        } 
         #endregion
 
-        #region Bounds and collision
-
-        /// <summary>
-        /// Gets the collision mode of the tile at a particular location.
-        /// This method handles tiles outside of the levels boundries by making it
-        /// impossible to escape past the left or right edges, but allowing things
-        /// to jump beyond the top of the level and fall off the bottom.
-        /// </summary>
-        public TileCollision GetCollision(int x, int y)
-        {
-            // Prevent escaping past the level ends.
-            if (x < 0 || x >= Width)
-                return TileCollision.Impassable;
-            // Allow jumping past the level top and falling through the bottom.
-            if (y < 0 || y >= Height)
-                return TileCollision.Passable;
-
-            return tiles[x, y].Collision;
-        }
-
-        public IHittable GetHitVictim(int x, int y)
-        {
-            if ((x < 0 || x >= Width) || (y < 0 || y >= Height))
-            {
-                return null;
-            }
-            return tiles[x, y];
-        }
-
-        /// <summary>
-        /// Gets the bounding rectangle of a tile in world space.
-        /// </summary>        
-        public Rectangle GetBounds(int x, int y)
-        {
-            return new Rectangle(x * Tile.Width, y * Tile.Height, Tile.Width, Tile.Height);
-        }
-
-        /// <summary>
-        /// Width of level measured in tiles.
-        /// </summary>
-        public int Width
-        {
-            get { return tiles.GetLength(0); }
-        }
-
-        /// <summary>
-        /// Height of the level measured in tiles.
-        /// </summary>
-        public int Height
-        {
-            get { return tiles.GetLength(1); }
-        }
-
-        #endregion
-
-        #region Update
-
-        /// <summary>
-        /// Updates all objects in the world, performs collision between them,
-        /// and handles the time limit with scoring.
-        /// </summary>
-        public void Update(
-            GameTime gameTime,
-            KeyboardState keyboardState)
-        {
-            UpdateProjectiles(gameTime);
-
-            // Pause while the player is dead or time is expired.
-            if (!Player.IsAlive || TimeRemaining == TimeSpan.Zero)
-            {
-                // Still want to perform physics on the player.
-                Player.ApplyPhysics(gameTime);
-            }
-            else if (ReachedExit)
-            {
-                // Animate the time being converted into points.
-                int seconds = (int)Math.Round(gameTime.ElapsedGameTime.TotalSeconds * 100.0f);
-                seconds = Math.Min(seconds, (int)Math.Ceiling(TimeRemaining.TotalSeconds));
-                timeRemaining -= TimeSpan.FromSeconds(seconds);
-                score += seconds * PointsPerSecond;
-            }
-            else
-            {
-                timeRemaining -= gameTime.ElapsedGameTime;
-                Player.Update(gameTime, keyboardState);
-                UpdateGems(gameTime);
-
-                // Falling off the bottom of the level kills the player.
-                if (Player.BoundingRectangle.Top >= Height * Tile.Height)
-                    OnPlayerKilled();
-
-                foreach (var obj in gameObjects)
-                {
-                    obj.Update(gameTime,keyboardState);
-                }
-
-                // The player has reached the exit if they are standing on the ground and
-                // his bounding rectangle contains the center of the exit tile. They can only
-                // exit when they have collected all of the gems.
-                if (Player.IsAlive &&
-                    Player.IsOnGround &&
-                    Player.BoundingRectangle.Contains(exit))
-                {
-                    OnExitReached();
-                }
-            }
-
-            // Clamp the time remaining at zero.
-            if (timeRemaining < TimeSpan.Zero)
-                timeRemaining = TimeSpan.Zero;
-        }
-
-        private void UpdateProjectiles(GameTime gameTime)
-        {
-            var hitProjectiles = projectiles.Where(b => b.Hit).ToArray();
-            //apply hit actions
-            Array.ForEach(hitProjectiles, h => h.OnHit());
-            //create explosions
-            Array.ForEach(hitProjectiles, h => _explosionMaster.AddExplosion(h.Explosion, gameTime));
-
-            //remove hit projectiles
-            projectiles = projectiles.Except(hitProjectiles).ToList();
-        }
-
-        /// <summary>
-        /// Animates each gem and checks to allows the player to collect them.
-        /// </summary>
-        private void UpdateGems(GameTime gameTime)
-        {
-            for (int i = 0; i < gems.Count; ++i)
-            {
-                Gem gem = gems[i];
-
-                gem.Update(gameTime);
-
-                if (gem.BoundingCircle.Intersects(Player.BoundingRectangle))
-                {
-                    gems.RemoveAt(i--);
-                    OnGemCollected(gem, Player);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Animates each enemy and allow them to kill the player.
-        /// </summary>
-        private void UpdateBullets(GameTime gameTime)
-        {
-            
-        }
-
-        /// <summary>
-        /// Called when a gem is collected.
-        /// </summary>
-        /// <param name="gem">The gem that was collected.</param>
-        /// <param name="collectedBy">The player who collected this gem.</param>
-        private void OnGemCollected(Gem gem, Player collectedBy)
-        {
-            score += Gem.PointValue;
-
-            gem.OnCollected(collectedBy);
-        }
-
-        /// <summary>
-        /// Called when the player is killed.
-        /// </summary>
-        /// <param name="killedBy">
-        /// The enemy who killed the player. This is null if the player was not killed by an
-        /// enemy, such as when a player falls into a hole.
-        /// </param>
-        private void OnPlayerKilled()
-        {
-            Player.OnKilled(null);
-        }
-
-        /// <summary>
-        /// Called when the player reaches the level's exit.
-        /// </summary>
-        private void OnExitReached()
-        {
-            Player.OnReachedExit();
-            exitReachedSound.Play();
-            reachedExit = true;
-        }
-
-        /// <summary>
-        /// Restores the player to the starting point to try the level again.
-        /// </summary>
-        public void StartNewLife()
-        {
-            Player.Reset(start);
-        }
-
-        #endregion
-
-        #region Draw
-
-        /// <summary>
-        /// Draw everything in the level from background to foreground.
-        /// </summary>
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
-        {
-            DrawTiles(spriteBatch);
-            foreach (Gem gem in gems)
-                gem.Draw(gameTime, spriteBatch);
-
-            Player.Draw(gameTime, spriteBatch, false);
-
-            foreach (var obj in gameObjects)
-            {
-                obj.Draw(gameTime, spriteBatch, false);
-            }
-
-        }
-
-        /// <summary>
-        /// Draws each tile in the level.
-        /// </summary>
-        private void DrawTiles(SpriteBatch spriteBatch)
-        {
-            // For each tile position
-            for (int y = 0; y < Height; ++y)
-            {
-                for (int x = 0; x < Width; ++x)
-                {
-                    // If there is a visible tile in that position
-                    Texture2D texture = tiles[x, y].Texture;
-                    if (texture != null && !tiles[x,y].Dead)
-                    {
-                        // Draw it in screen space.
-                        Vector2 position = new Vector2(x, y) * Tile.Size;
-                        spriteBatch.Draw(texture, position, Color.White);
-                    }
-                }
-            }
-        }
-
-        #endregion
-
-        public void CreateBullet(Vector2 startPos, float movement, GameTime gameTime)
-        {
-            _explosionMaster.AddExplosion(startPos, 4, 2f, 360, 100f, gameTime);
-            var bullet = new Bullet(this, startPos, (int) movement, "Player");
-            bullet.OnPlayerHit = OnPlayerKilled;
-            projectiles.Add(bullet);
-        }
-
-        public TileBomb CreateTilebomb(Vector2 vector2, int direction)
-        {
-            var bomb = new TileBomb(this, vector2, direction);
-            gameObjects.Add(bomb);
-            projectiles.Add(bomb);
-
-            return bomb;
-        }
     }
 }

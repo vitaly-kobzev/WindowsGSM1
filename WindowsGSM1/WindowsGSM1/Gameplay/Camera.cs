@@ -88,12 +88,12 @@ namespace WindowsGSM1.Gameplay
         private int _boundaryLeft;
         private Rectangle _titleSafeArea;
 
-        private Level _level;
+        private Engine _level;
 
         protected float _viewportHeight;
         protected float _viewportWidth;
 
-        public Camera2D(Game game, Level level)
+        public Camera2D(Game game, Engine level)
             : base(game)
         {
             game.Components.Add(this);

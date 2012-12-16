@@ -30,11 +30,11 @@ namespace WindowsGSM1.Gameplay
         private Vector2 basePosition;
         private float bounce;
 
-        public Level Level
+        public Engine Level
         {
             get { return level; }
         }
-        Level level;
+        Engine level;
 
         /// <summary>
         /// Gets the current position of this gem in world space.
@@ -61,7 +61,7 @@ namespace WindowsGSM1.Gameplay
         /// <summary>
         /// Constructs a new gem.
         /// </summary>
-        public Gem(Level level, Vector2 position)
+        public Gem(Engine level, Vector2 position)
         {
             this.level = level;
             this.basePosition = position;

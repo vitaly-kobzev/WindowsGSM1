@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace WindowsGSM1.Gameplay
 {
-    public class TileBomb : GameObject, IProjectile
+    public class TileBomb : MovableGameObject, IProjectile
     {
 
         public string Source { get; private set; }
@@ -59,11 +59,11 @@ namespace WindowsGSM1.Gameplay
 
         public void OnHit()
         {
-            var tile = new Tile(GeneratedTile, TileCollision.Impassable, _level.Content.Load<Texture2D>("Sprites/wallhit"));
+            var tile = new Tile(GeneratedTile, TileCollision.Impassable, _engine.Content.Load<Texture2D>("Sprites/wallhit"));
 
             var x = (int) Position.X/Tile.Width;
             var y = (int)Position.Y / Tile.Height;
-            _level.tiles[x, y] = tile;
+            _engine.tiles[x, y] = tile;
         }
 
         public Texture2D GeneratedTile { get; set; }
@@ -75,14 +75,14 @@ namespace WindowsGSM1.Gameplay
             Hit = true;
         }
 
-        public TileBomb(Level level, Vector2 startingPos, int movement) : base(level)
+        public TileBomb(Engine engine, Vector2 startingPos, int movement) : base(engine)
         {
             Movement = movement;
             Position = startingPos;
 
             Hit = false;
 
-            LoadContent(level.Content);
+            LoadContent(engine.Content);
 
             _origin = new Vector2(_texture.Width / 2.0f, _texture.Height);
 
