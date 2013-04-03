@@ -8,8 +8,17 @@
 #endregion
 
 #region Using Statements
+
+using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using WindowsGSM1.Factories.Implementation;
+using WindowsGSM1.Factories.Interfaces;
+using WindowsGSM1.Managers;
+using WindowsGSM1.Managers.Implementation;
+using WindowsGSM1.Managers.Interfaces;
+using WindowsGSM1.Settings;
+
 #endregion
 
 namespace WindowsGSM1
@@ -24,34 +33,28 @@ namespace WindowsGSM1
     {
         #region Fields
 
-        GraphicsDeviceManager graphics;
-        ScreenManager screenManager;
+        private readonly IManagerFactory managerFactory;
 
+        private ScreenManager screenManager;
 
         // By preloading any assets used by UI rendering, we avoid framerate glitches
         // when they suddenly need to be loaded in the middle of a menu transition.
-        static readonly string[] preloadAssets =
-        {
-            "gradient",
-        };
-
+        private static readonly string[] preloadAssets = {"gradient"};
 
         #endregion
 
-        #region Initialization
+        #region Constructors
 
-
-        /// <summary>
-        /// The main game constructor.
-        /// </summary>
         public GameStateManagementGame()
         {
             Content.RootDirectory = "Content";
 
-            graphics = new GraphicsDeviceManager(this);
-            graphics.PreferredBackBufferWidth = 1920;
-            graphics.PreferredBackBufferHeight = 1080;
-            graphics.IsFullScreen = false;
+            managerFactory = new ManagerFactory();
+
+            GameSettings.VideoSettings.VideoSettingsChanged += VideoSettings_VideoSettingsChanged;
+
+            InitGraphicsDevice();
+
             // Create the screen manager component.
             screenManager = new ScreenManager(this);
 
@@ -62,39 +65,65 @@ namespace WindowsGSM1
             screenManager.AddScreen(new MainMenuScreen(), null);
         }
 
+        private void VideoSettings_VideoSettingsChanged(object sender, System.EventArgs e)
+        {
+            this.InitGraphicsDevice();
+        }
 
-        /// <summary>
-        /// Loads graphics content.
-        /// </summary>
+        #endregion
+
+        #region Properties
+
+        public IManagerFactory ManagerFactory
+        {
+            get { return this.managerFactory; }
+        }
+
+        private GameSettings GameSettings
+        {
+            get { return this.ManagerFactory.SettingsManager.GetGameSettings(); }
+        }
+
+        private GraphicsDeviceManager Graphics { get; set; }
+
+        #endregion
+
+        #region Overrides
+
         protected override void LoadContent()
         {
             foreach (string asset in preloadAssets)
             {
-                Content.Load<object>(asset);
+                this.Content.Load<object>(asset);
             }
         }
 
-
-        #endregion
-
-        #region Draw
-
-
-        /// <summary>
-        /// This is called when the game should draw itself.
-        /// </summary>
         protected override void Draw(GameTime gameTime)
         {
-            graphics.GraphicsDevice.Clear(Color.Black);
+            this.Graphics.GraphicsDevice.Clear(Color.Black);
 
             // The real drawing happens inside the screen manager component.
             base.Draw(gameTime);
         }
 
-
         #endregion
-    }
 
+        private void InitGraphicsDevice()
+        {
+            VideoSettings videoSettings = this.GameSettings.VideoSettings;
+
+            if (this.Graphics == null)
+            {
+                this.Graphics = new GraphicsDeviceManager(this);
+            }
+
+            this.Graphics.PreferredBackBufferWidth = videoSettings.ScreenWidth;
+            this.Graphics.PreferredBackBufferHeight = videoSettings.ScreenHeight;
+            this.Graphics.IsFullScreen = videoSettings.IsFullScreenMode;
+
+            this.Graphics.ApplyChanges();
+        }
+    }
 
     #region Entry Point
 

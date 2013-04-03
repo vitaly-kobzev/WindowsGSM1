@@ -224,6 +224,7 @@ namespace WindowsGSM1
         /// </summary>
         public virtual void UnloadContent() { }
 
+        public virtual void Initialize() { }
 
         #endregion
 

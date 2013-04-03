@@ -73,7 +73,6 @@ namespace WindowsGSM1
 
         #region Events
 
-
         /// <summary>
         /// Event raised when the menu entry is selected.
         /// </summary>
@@ -103,6 +102,7 @@ namespace WindowsGSM1
             this.text = text;
         }
 
+        public MenuEntry() : this(string.Empty){}
 
         #endregion
 

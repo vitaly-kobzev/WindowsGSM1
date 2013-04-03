@@ -9,6 +9,8 @@
 
 #region Using Statements
 using Microsoft.Xna.Framework;
+using WindowsGSM1.Screens.Options;
+
 #endregion
 
 namespace WindowsGSM1
@@ -22,127 +24,47 @@ namespace WindowsGSM1
     {
         #region Fields
 
-        MenuEntry ungulateMenuEntry;
-        MenuEntry languageMenuEntry;
-        MenuEntry frobnicateMenuEntry;
-        MenuEntry elfMenuEntry;
-
-        enum Ungulate
-        {
-            BactrianCamel,
-            Dromedary,
-            Llama,
-        }
-
-        static Ungulate currentUngulate = Ungulate.Dromedary;
-
-        static string[] languages = { "C#", "French", "Deoxyribonucleic acid" };
-        static int currentLanguage = 0;
-
-        static bool frobnicate = true;
-
-        static int elf = 23;
+        private MenuEntry video;
+        private MenuEntry sound;
+        private MenuEntry gameplay;
 
         #endregion
 
         #region Initialization
 
-
-        /// <summary>
-        /// Constructor.
-        /// </summary>
         public OptionsMenuScreen()
-            : base("Options")
         {
             // Create our menu entries.
-            ungulateMenuEntry = new MenuEntry(string.Empty);
-            languageMenuEntry = new MenuEntry(string.Empty);
-            frobnicateMenuEntry = new MenuEntry(string.Empty);
-            elfMenuEntry = new MenuEntry(string.Empty);
+            this.video = new MenuEntry("Video");
+            this.video.Selected += VideoMenuEntrySelected;
 
-            SetMenuEntryText();
-
-            MenuEntry back = new MenuEntry("Back");
-
-            // Hook up menu event handlers.
-            ungulateMenuEntry.Selected += UngulateMenuEntrySelected;
-            languageMenuEntry.Selected += LanguageMenuEntrySelected;
-            frobnicateMenuEntry.Selected += FrobnicateMenuEntrySelected;
-            elfMenuEntry.Selected += ElfMenuEntrySelected;
-            back.Selected += OnCancel;
+            this.sound = new MenuEntry("Sound");
+            this.gameplay = new MenuEntry("Gameplay");
 
             // Add entries to the menu.
-            MenuEntries.Add(ungulateMenuEntry);
-            MenuEntries.Add(languageMenuEntry);
-            MenuEntries.Add(frobnicateMenuEntry);
-            MenuEntries.Add(elfMenuEntry);
-            MenuEntries.Add(back);
+            this.MenuEntries.Add(video);
+            this.MenuEntries.Add(sound);
+            this.MenuEntries.Add(gameplay);
         }
-
-
-        /// <summary>
-        /// Fills in the latest values for the options screen menu text.
-        /// </summary>
-        void SetMenuEntryText()
-        {
-            ungulateMenuEntry.Text = "Preferred ungulate: " + currentUngulate;
-            languageMenuEntry.Text = "Language: " + languages[currentLanguage];
-            frobnicateMenuEntry.Text = "Frobnicate: " + (frobnicate ? "on" : "off");
-            elfMenuEntry.Text = "elf: " + elf;
-        }
-
 
         #endregion
 
+        protected override string Title
+        {
+            get { return "Options"; }
+        }
+
+        protected override bool BackButtonAvailable
+        {
+            get { return true; }
+        }
+
         #region Handle Input
 
-
-        /// <summary>
-        /// Event handler for when the Ungulate menu entry is selected.
-        /// </summary>
-        void UngulateMenuEntrySelected(object sender, PlayerIndexEventArgs e)
+        void VideoMenuEntrySelected(object sender, PlayerIndexEventArgs e)
         {
-            currentUngulate++;
-
-            if (currentUngulate > Ungulate.Llama)
-                currentUngulate = 0;
-
-            SetMenuEntryText();
+            this.ScreenManager.AddScreen(new VideoOptionsMenuScreen(), e.PlayerIndex);
         }
-
-
-        /// <summary>
-        /// Event handler for when the Language menu entry is selected.
-        /// </summary>
-        void LanguageMenuEntrySelected(object sender, PlayerIndexEventArgs e)
-        {
-            currentLanguage = (currentLanguage + 1) % languages.Length;
-
-            SetMenuEntryText();
-        }
-
-
-        /// <summary>
-        /// Event handler for when the Frobnicate menu entry is selected.
-        /// </summary>
-        void FrobnicateMenuEntrySelected(object sender, PlayerIndexEventArgs e)
-        {
-            frobnicate = !frobnicate;
-
-            SetMenuEntryText();
-        }
-
-
-        /// <summary>
-        /// Event handler for when the Elf menu entry is selected.
-        /// </summary>
-        void ElfMenuEntrySelected(object sender, PlayerIndexEventArgs e)
-        {
-            elf++;
-
-            SetMenuEntryText();
-        }
-
 
         #endregion
     }

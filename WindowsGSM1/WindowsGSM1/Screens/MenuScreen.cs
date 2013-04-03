@@ -26,14 +26,14 @@ namespace WindowsGSM1
     {
         #region Fields
 
-        List<MenuEntry> menuEntries = new List<MenuEntry>();
-        int selectedEntry = 0;
-        string menuTitle;
+        private readonly List<MenuEntry> menuEntries = new List<MenuEntry>();
+        private int selectedEntry = 0;
+        private string menuTitle;
+        private MenuEntry back;
 
         #endregion
 
         #region Properties
-
 
         /// <summary>
         /// Gets the list of menu entries, so derived classes can add
@@ -44,23 +44,30 @@ namespace WindowsGSM1
             get { return menuEntries; }
         }
 
+        protected abstract string Title { get; }
+        protected abstract bool BackButtonAvailable { get; }
 
         #endregion
 
         #region Initialization
 
-
         /// <summary>
         /// Constructor.
         /// </summary>
-        public MenuScreen(string menuTitle)
+        public MenuScreen()
         {
-            this.menuTitle = menuTitle;
+            this.menuTitle = Title;
 
-            TransitionOnTime = TimeSpan.FromSeconds(0.5);
-            TransitionOffTime = TimeSpan.FromSeconds(0.5);
+            this.TransitionOnTime = TimeSpan.FromSeconds(0.5);
+            this.TransitionOffTime = TimeSpan.FromSeconds(0.5);
+
+            if (this.BackButtonAvailable)
+            {
+                this.back = new MenuEntry("Back");
+                this.back.Selected += OnCancel;
+                this.MenuEntries.Add(this.back);
+            }
         }
-
 
         #endregion
 
@@ -108,7 +115,6 @@ namespace WindowsGSM1
             }
         }
 
-
         /// <summary>
         /// Handler for when the user has chosen a menu entry.
         /// </summary>
@@ -116,7 +122,6 @@ namespace WindowsGSM1
         {
             menuEntries[entryIndex].OnSelectEntry(playerIndex);
         }
-
 
         /// <summary>
         /// Handler for when the user has cancelled the menu.
@@ -126,7 +131,6 @@ namespace WindowsGSM1
             ExitScreen();
         }
 
-
         /// <summary>
         /// Helper overload makes it easy to use OnCancel as a MenuEntry event handler.
         /// </summary>
@@ -134,7 +138,6 @@ namespace WindowsGSM1
         {
             OnCancel(e.PlayerIndex);
         }
-
 
         #endregion
 
