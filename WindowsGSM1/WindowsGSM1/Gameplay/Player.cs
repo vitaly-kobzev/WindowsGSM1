@@ -88,8 +88,7 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         public Player(Engine engine, Vector2 position) : base(engine)
         {
-            LoadContent(engine.Content);
-
+            //LoadContent(engine.Content);
             Reset(position);
         }
 
@@ -121,6 +120,8 @@ namespace WindowsGSM1.Gameplay
             killedSound = contentManager.Load<SoundEffect>("Sounds/PlayerKilled");
             jumpSound = contentManager.Load<SoundEffect>("Sounds/PlayerJump");
             fallSound = contentManager.Load<SoundEffect>("Sounds/PlayerFall");
+
+			sprite.PlayAnimation(idleAnimation);
         }
 
         /// <summary>
@@ -132,7 +133,6 @@ namespace WindowsGSM1.Gameplay
             Position = position;
             velocity = Vector2.Zero;
             isAlive = true;
-            sprite.PlayAnimation(idleAnimation);
         }
 
         /// <summary>
@@ -374,7 +374,7 @@ namespace WindowsGSM1.Gameplay
 		    OnKilled(null);
 	    }
 
-	    public override void OnHit()
+	    public override void OnHit(HitData hitData)
 	    {
 		    IsDead = true;
 	    }

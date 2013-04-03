@@ -29,7 +29,7 @@ namespace WindowsGSM1.Gameplay
                 return new ExplosionData
                     {
                         NumberOfParticles = 40,
-                        Angle = 380,
+                        MaxAngle = 380,
                         CustomTexture = HitTexture,
                         MaxAge = 200f,
                         Position = Position,
@@ -38,14 +38,9 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
-        public override void OnHit()
+        public override void OnHit(HitData hitData)
         {
 	        IsDead = true;
-        }
-
-        protected override Vector2 Origin
-        {
-            get { return _origin; }
         }
 
         public Texture2D HitTexture { get; set; }
@@ -56,14 +51,12 @@ namespace WindowsGSM1.Gameplay
             Position = startingPos;
             Source = source;
 
-            LoadContent(_engine.Content);
+            //LoadContent(_engine.Content);
         }
 
         public override void LoadContent(ContentManager content)
         {
             _texture = content.Load<Texture2D>("Sprites/Bullet");
-
-            _origin = new Vector2(_texture.Width / 2.0f, _texture.Height);
         }
 
         protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
@@ -80,7 +73,7 @@ namespace WindowsGSM1.Gameplay
 
 				if (collisions.CollidedObject != null) //if what we hit isn't just a tile or screen border
 				{
-					collisions.CollidedObject.OnHit();
+					collisions.CollidedObject.OnHit(new HitData{Direction = Movement,HitPosition = Position,HitTime = gameTime});
 				}
 			}
         }
@@ -99,11 +92,8 @@ namespace WindowsGSM1.Gameplay
 
         protected override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            // Calculate the source rectangle of the current frame.
-            var origin = new Vector2(2,1);
-
             // Draw the current frame.
-            spriteBatch.Draw(_texture, Position, null, Color.White, 0.0f, origin, 1.0f, SpriteEffects.None, 1);
+            spriteBatch.Draw(_texture, Position, null, Color.White, 0.0f, Origin, 1.0f, SpriteEffects.None, 1);
         }
 
 	    public override void OnDead()

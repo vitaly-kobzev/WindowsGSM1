@@ -75,6 +75,6 @@ namespace WindowsGSM1.Gameplay
 		}
 
 		public abstract void OnDead();
-		public abstract void OnHit();
+		public abstract void OnHit(HitData hitData);
     }
 }

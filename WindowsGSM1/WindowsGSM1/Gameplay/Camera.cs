@@ -77,6 +77,8 @@ namespace WindowsGSM1.Gameplay
         ///     <c>true</c> if the target is in view at the specified position; otherwise, <c>false</c>.
         /// </returns>
         bool IsInView(Vector2 position, Texture2D texture);
+
+		event EventHandler<Camera2D.CameraEventArgs> CameraMoved;
     }
 
     public class Camera2D : GameComponent, ICamera2D
@@ -156,16 +158,17 @@ namespace WindowsGSM1.Gameplay
             // Move the Camera to the position that it needs to go
             var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-            _position.X += (Focus.Position.X - Position.X) * MoveSpeed * delta;
-            _position.Y += (Focus.Position.Y - Position.Y) * MoveSpeed * delta;
+			var dx = (Focus.Position.X - Position.X) * MoveSpeed * delta;
+			var dy = (Focus.Position.Y - Position.Y) * MoveSpeed * delta;
 
-            //_position.X = (Focus.Position.X);
-            //_position.Y = (Focus.Position.Y);
-
-            //ApplyBoundaries();
+	        _position.X += dx;
+	        _position.Y += dy;
 
             _titleSafeArea.X = (int)(_position.X - ScreenCenter.X+10);
             _titleSafeArea.Y = (int)(_position.Y - ScreenCenter.Y+10);
+
+			if(dx!=0 || dy!=0)
+				OnCameraMoved(new CameraEventArgs{Delta = new Vector2(dx,dy)});
 
             base.Update(gameTime);
         }
@@ -182,7 +185,15 @@ namespace WindowsGSM1.Gameplay
                 _position.X = _boundaryLeft;
         }
 
-        /// <summary>
+	    public event EventHandler<CameraEventArgs> CameraMoved;
+
+	    private void OnCameraMoved(CameraEventArgs e)
+	    {
+		    EventHandler<CameraEventArgs> handler = CameraMoved;
+		    if (handler != null) handler(this, e);
+	    }
+
+	    /// <summary>
         /// Determines whether the target is in view given the specified position.
         /// This can be used to increase performance by not drawing objects
         /// directly in the viewport
@@ -206,5 +217,10 @@ namespace WindowsGSM1.Gameplay
             // In View
             return true;
         }
+
+		public class CameraEventArgs :EventArgs
+		{
+			public Vector2 Delta { get; set; }
+		}
     }
 }

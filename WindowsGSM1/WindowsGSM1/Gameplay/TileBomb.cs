@@ -48,7 +48,7 @@ namespace WindowsGSM1.Gameplay
                 return new ExplosionData
                     {
                         NumberOfParticles = 80,
-                        Angle = 360,
+                        MaxAngle = 360,
                         CustomTexture = null,
                         MaxAge = 600f,
                         Position = Position,
@@ -57,7 +57,7 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
-        public override void OnHit()
+        public override void OnHit(HitData hitData)
         {
             //var tile = new Tile(GeneratedTile, TileCollision.Impassable, _engine.Content.Load<Texture2D>("Sprites/wallhit"));
 
@@ -81,17 +81,6 @@ namespace WindowsGSM1.Gameplay
             Position = startingPos;
 
             Hit = false;
-
-            LoadContent(engine.Content);
-
-            _origin = new Vector2(_texture.Width / 2.0f, _texture.Height);
-
-            int width = (int)(_texture.Width * 0.4);
-            int left = (_texture.Width - width) / 2;
-            int height = (int)(_texture.Height * 0.8);
-            int top = _texture.Height - height;
-
-            _localBounds = new Rectangle(left,top,width,height);
         }
 
         protected override Vector2 Origin
@@ -104,6 +93,13 @@ namespace WindowsGSM1.Gameplay
             _texture = content.Load<Texture2D>("Sprites/Tilebomb");
             GeneratedTile = content.Load<Texture2D>("Tiles/BlockB1");
             HitTexture = content.Load<Texture2D>("Sprites/explosion");
+
+			int width = (int)(_texture.Width * 0.4);
+			int left = (_texture.Width - width) / 2;
+			int height = (int)(_texture.Height * 0.8);
+			int top = _texture.Height - height;
+
+			_localBounds = new Rectangle(left, top, width, height);
         }
 
         protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)

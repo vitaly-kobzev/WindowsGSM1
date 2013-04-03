@@ -40,7 +40,7 @@ namespace WindowsGSM1
         private Texture2D loseOverlay;
         private Texture2D diedOverlay;
 
-        private Engine level;
+        private Engine gameEngine;
 
         private ParticleEngine _particleEngine;
 
@@ -111,10 +111,14 @@ namespace WindowsGSM1
             string levelPath = string.Format("Content/Levels/{0}.txt", 0);
             using (Stream fileStream = TitleContainer.OpenStream(levelPath))
             {
-                level = new Engine(ScreenManager.Game.Services, fileStream,_particleEngine);
-                level.GraphicsDevice = ScreenManager.GraphicsDevice;
-                _camera = new Camera2D(ScreenManager.Game, level);
-                _camera.Focus = level.Player;
+                gameEngine = new Engine(ScreenManager.Game.Services,_particleEngine);
+                gameEngine.GraphicsDevice = ScreenManager.GraphicsDevice;
+
+				_camera = new Camera2D(ScreenManager.Game, gameEngine);
+
+				gameEngine.Initialize(fileStream, _camera);
+
+				_camera.Focus = gameEngine.Player;
             }
 
             // once the load has finished, we use ResetElapsedTime to tell the game's
@@ -156,7 +160,7 @@ namespace WindowsGSM1
 
             if (IsActive)
             {
-                level.Update(gameTime,keyboardState);
+                gameEngine.Update(gameTime,keyboardState);
                 _particleEngine.UpdateParticles(gameTime);
             }
         }
@@ -229,7 +233,7 @@ namespace WindowsGSM1
             //SpriteSortMode.FrontToBack,BlendState.AlphaBlend,SamplerState.AnisotropicClamp,DepthStencilState.Default,RasterizerState.CullClockwise,null,new Matrix()
             spriteBatch.Begin(SpriteSortMode.BackToFront, null, null, null, null, null,_camera.Transform);
 
-            level.Draw(gameTime, spriteBatch);
+            gameEngine.Draw(gameTime, spriteBatch);
 
             DrawHud();
 
@@ -241,6 +245,12 @@ namespace WindowsGSM1
 
             spriteBatch.End();
 
+			spriteBatch.Begin(SpriteSortMode.BackToFront, null, null, null, null, null, _camera.Transform);
+
+			gameEngine.DrawCrosshair(gameTime, spriteBatch);
+
+			spriteBatch.End();
+
             base.Draw(gameTime);
         }
 
@@ -251,17 +261,17 @@ namespace WindowsGSM1
             Vector2 center = new Vector2(titleSafeArea.X + titleSafeArea.Width / 2.0f,
                                          titleSafeArea.Y + titleSafeArea.Height / 2.0f);
 
-	        string hudString = "HUD STRING";
+	        string hudString = string.Format("{0} {1}",Mouse.GetState().X.ToString(),Mouse.GetState().Y.ToString());
 
 			DrawShadowedString(hudFont, hudString, hudLocation, Color.Yellow);
 
             // Draw score
 			float timeHeight = hudFont.MeasureString(hudString).Y;
-            DrawShadowedString(hudFont, "SCORE: " + level.Score.ToString(), hudLocation + new Vector2(0.0f, timeHeight * 1.2f), Color.Yellow);
+            DrawShadowedString(hudFont, "SCORE: " + gameEngine.Score.ToString(), hudLocation + new Vector2(0.0f, timeHeight * 1.2f), Color.Yellow);
 
             // Determine the status overlay message to show.
             Texture2D status = null;
-            if (!level.Player.IsAlive)
+            if (!gameEngine.Player.IsAlive)
             {
                 status = diedOverlay;
             }

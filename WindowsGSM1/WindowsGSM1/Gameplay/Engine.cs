@@ -27,6 +27,8 @@ namespace WindowsGSM1.Gameplay
     {
 		public Level Level { get; private set; }
 
+		public ICamera2D Camera { get; private set; }
+
         public GraphicsDevice GraphicsDevice { get; set; }
 
         // Entities in the level.
@@ -42,6 +44,8 @@ namespace WindowsGSM1.Gameplay
 		private List<GameObject> _movableObjects = new List<GameObject>(); 
 
 		private readonly List<GameObject> _newObjects = new List<GameObject>();
+
+		private Crosshair _crosshair;
 
 		public int Score { get; private set; }
 
@@ -65,7 +69,7 @@ namespace WindowsGSM1.Gameplay
         /// <param name="fileStream">
         /// A stream containing the tile data.
         /// </param>
-        public Engine(IServiceProvider serviceProvider, Stream fileStream, IExplosionMaster explosionMaster, bool debugMode)
+        public Engine(IServiceProvider serviceProvider, IExplosionMaster explosionMaster, bool debugMode)
         {
 	        _debugMode = debugMode;
 
@@ -73,24 +77,44 @@ namespace WindowsGSM1.Gameplay
             Content = new ContentManager(serviceProvider, "Content");
 
 			ExplosionMaster = explosionMaster;
+        }
 
-            Level = new Level(Content,this);
+		public void Initialize(Stream fileStream, ICamera2D camera)
+		{
+			Camera = camera;
 
-			_gameObjects.AddRange(Level.LoadTiles(fileStream));
+			Level = new Level(Content, this);
 
-            // Load sounds.
-            exitReachedSound = Content.Load<SoundEffect>("Sounds/ExitReached");
+			InitCrosshair();
+
+			AddGameObjects(Level.LoadTiles(fileStream));
+
+			// Load sounds.
+			exitReachedSound = Content.Load<SoundEffect>("Sounds/ExitReached");
 
 			SpawnPlayer();
 
 			AddGameObject(Player);
-        }
+		}
 
-		public Engine(IServiceProvider serviceProvider, Stream fileStream, IExplosionMaster explosionMaster):this(serviceProvider,fileStream,explosionMaster,false)
+		private void InitCrosshair()
+		{
+			_crosshair = new Crosshair(this);
+			_crosshair.LoadContent(Content);
+		}
+
+		public Engine(IServiceProvider serviceProvider, IExplosionMaster explosionMaster):this(serviceProvider,explosionMaster,false)
 		{}
 
-	    public void AddGameObject(GameObject obj)
+		public void AddGameObjects(GameObject[] objects)
+		{
+			Array.ForEach(objects, o => o.LoadContent(Content));
+			_newObjects.AddRange(objects);
+		}
+
+		public void AddGameObject(GameObject obj)
 	    {
+			obj.LoadContent(Content);
 			_newObjects.Add(obj);
 	    }
 
@@ -124,6 +148,8 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         public void Update(GameTime gameTime,KeyboardState keyboardState)
         {
+	        UpdateCrosshair(gameTime, Mouse.GetState());
+
             // Pause while the player is dead or time is expired.
             if (!Player.IsAlive)
             {
@@ -132,11 +158,11 @@ namespace WindowsGSM1.Gameplay
             }
             else
             {
+				UpdateGameObjects(gameTime, keyboardState);
+
                 // Falling off the bottom of the level kills the player.
                 if (Player.BoundingRectangle.Top >= Level.Height * Tile.Height)
                     OnPlayerKilled();
-
-	            UpdateGameObjects(gameTime, keyboardState);
 
                 // The player has reached the exit if they are standing on the ground and
                 // his bounding rectangle contains the center of the exit tile. They can only
@@ -149,6 +175,11 @@ namespace WindowsGSM1.Gameplay
                 }
             }
         }
+
+		private void UpdateCrosshair(GameTime gameTime, MouseState mouseState)
+		{
+			_crosshair.Update(gameTime, mouseState);
+		}
 
 		/// <summary>
 		/// Manages game object collection: adds new objects, removes dead
@@ -220,7 +251,6 @@ namespace WindowsGSM1.Gameplay
             {
 				obj.Draw(gameTime, spriteBatch, _debugMode);
             }
-
         }
 
         #endregion
@@ -228,6 +258,11 @@ namespace WindowsGSM1.Gameplay
 		public IEnumerable<MovableGameObject> GetMovables()
 		{
 			return _movableObjects.Cast<MovableGameObject>();
+		}
+
+		public void DrawCrosshair(GameTime gameTime, SpriteBatch spriteBatch)
+		{
+			_crosshair.Draw(gameTime, spriteBatch);
 		}
     }
 }

@@ -76,13 +76,13 @@ namespace WindowsGSM1.Gameplay
                                  Texture2D customTexture)
         {
             for (int i = 0; i < numberOfParticles; i++)
-                AddExplosionParticle(explosionPos, size, angle, maxAge, gameTime,customTexture);
+                AddExplosionParticle(explosionPos, size, 0, angle, maxAge, gameTime,customTexture);
         }
 
         public void AddExplosion(ExplosionData edata, GameTime gameTime)
         {
             for (int i = 0; i < edata.NumberOfParticles; i++)
-                AddExplosionParticle(edata.Position, edata.Size, edata.Angle, edata.MaxAge, gameTime, edata.CustomTexture);
+                AddExplosionParticle(edata.Position, edata.Size, edata.MinAngle, edata.MaxAngle, edata.MaxAge, gameTime, edata.CustomTexture);
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -94,7 +94,7 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
-        private void AddExplosionParticle(Vector2 explosionPos, float explosionSize, int maxAngle, float maxAge, GameTime gameTime,Texture2D explosionTexture)
+        private void AddExplosionParticle(Vector2 explosionPos, float explosionSize,int minAngle, int maxAngle, float maxAge, GameTime gameTime,Texture2D explosionTexture)
         {
             var particle = new ParticleData();
 
@@ -109,7 +109,7 @@ namespace WindowsGSM1.Gameplay
 
             float particleDistance = (float)_randomizer.NextDouble() * explosionSize;
             Vector2 displacement = new Vector2(particleDistance, 0);
-            var angle = MathHelper.ToRadians(_randomizer.Next(maxAngle));
+            var angle = MathHelper.ToRadians(_randomizer.Next(minAngle,maxAngle));
             displacement = Vector2.Transform(displacement, Matrix.CreateRotationZ(angle));
 
             particle.Direction = displacement * 2.0f;

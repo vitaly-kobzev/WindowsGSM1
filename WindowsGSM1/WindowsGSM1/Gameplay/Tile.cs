@@ -87,8 +87,18 @@ namespace WindowsGSM1.Gameplay
 			_engine.Level.RemoveTileAt((int)v.X,(int)v.Y);
 	    }
 
-	    public override void OnHit()
+	    public override void OnHit(HitData hitData)
 	    {
+			_engine.ExplosionMaster.AddExplosion(new ExplosionData
+                    {
+                        NumberOfParticles = 10,
+						MinAngle = 135,
+                        MaxAngle = 225,
+                        CustomTexture = null,
+                        MaxAge = 600f,
+                        Position = hitData.HitPosition,
+                        Size = 25.0f
+                    }, hitData.HitTime);
 		    IsDead = true;
 	    }
     }

@@ -12,7 +12,8 @@ namespace WindowsGSM1.Gameplay
         public Vector2 Position;
         public int NumberOfParticles;
         public float Size;
-        public int Angle;
+	    public int MinAngle;
+        public int MaxAngle;
         public float MaxAge;
         public Texture2D CustomTexture;
     }
