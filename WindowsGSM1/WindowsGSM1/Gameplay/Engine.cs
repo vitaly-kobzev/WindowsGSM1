@@ -8,6 +8,7 @@
 #endregion
 
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
@@ -15,66 +16,43 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Audio;
 using System.IO;
 using System.Linq;
-using Microsoft.Xna.Framework.Input.Touch;
 using Microsoft.Xna.Framework.Input;
 
 namespace WindowsGSM1.Gameplay
 {
-    /// <summary>
-    /// A uniform grid of tiles with collections of gems and enemies.
-    /// The level owns the player and controls the game's win and lose
-    /// conditions as well as scoring.
-    /// </summary>
+	/// <summary>
+	/// Main class of a game. Every game object has a link to it
+	/// </summary>
     public class Engine : IDisposable
     {
-        private Texture2D[] layers;
+		public Level Level { get; private set; }
 
         public GraphicsDevice GraphicsDevice { get; set; }
 
         // Entities in the level.
-        public Player Player
-        {
-            get { return player; }
-        }
-        Player player;
+		public Player Player { get; private set; }
 
         public EventHandler<EventArgs> PlayerSpawned;
 
-        private IExplosionMaster _explosionMaster;
+		public IExplosionMaster ExplosionMaster { get; private set; }
 
-        private List<Gem> gems = new List<Gem>();
-        private List<GameObject> gameObjects = new List<GameObject>();
-        private List<IProjectile> projectiles = new List<IProjectile>();
+        private List<GameObject> _gameObjects = new List<GameObject>();
+		
+		//optimisation for collision checks
+		private List<GameObject> _movableObjects = new List<GameObject>(); 
 
+		private readonly List<GameObject> _newObjects = new List<GameObject>();
 
-        public int Score
-        {
-            get { return score; }
-        }
-        int score;
+		public int Score { get; private set; }
 
-        public bool ReachedExit
-        {
-            get { return reachedExit; }
-        }
-        bool reachedExit;
+		public bool ReachedExit { get; private set; }
 
-        public TimeSpan TimeRemaining
-        {
-            get { return timeRemaining; }
-        }
-        TimeSpan timeRemaining;
+		// Level content.        
+		public ContentManager Content { get; private set; }
 
-        private const int PointsPerSecond = 5;
+		private SoundEffect exitReachedSound;
 
-        // Level content.        
-        public ContentManager Content
-        {
-            get { return content; }
-        }
-        ContentManager content;
-
-        private SoundEffect exitReachedSound;
+		private bool _debugMode;
 
         #region Loading
 
@@ -87,34 +65,38 @@ namespace WindowsGSM1.Gameplay
         /// <param name="fileStream">
         /// A stream containing the tile data.
         /// </param>
-        public Engine(IServiceProvider serviceProvider, Stream fileStream, IExplosionMaster explosionMaster)
+        public Engine(IServiceProvider serviceProvider, Stream fileStream, IExplosionMaster explosionMaster, bool debugMode)
         {
+	        _debugMode = debugMode;
+
             // Create a new content manager to load content used just by this level.
-            content = new ContentManager(serviceProvider, "Content");
+            Content = new ContentManager(serviceProvider, "Content");
 
-            
+			ExplosionMaster = explosionMaster;
 
-            _explosionMaster = explosionMaster;
+            Level = new Level(Content,this);
 
-            timeRemaining = TimeSpan.FromMinutes(2.0);
-
-            LoadTiles(fileStream);
-
-            // Load background layer textures. For now, all levels must
-            // use the same backgrounds and only use the left-most part of them.
-            layers = new Texture2D[2];
-            for (int i = 0; i < layers.Length; ++i)
-            {
-                layers[i] = Content.Load<Texture2D>("Backgrounds/Layer" + i + "_0");
-            }
+			_gameObjects.AddRange(Level.LoadTiles(fileStream));
 
             // Load sounds.
             exitReachedSound = Content.Load<SoundEffect>("Sounds/ExitReached");
+
+			SpawnPlayer();
+
+			AddGameObject(Player);
         }
 
-        private void SpawnPlayer()
+		public Engine(IServiceProvider serviceProvider, Stream fileStream, IExplosionMaster explosionMaster):this(serviceProvider,fileStream,explosionMaster,false)
+		{}
+
+	    public void AddGameObject(GameObject obj)
+	    {
+			_newObjects.Add(obj);
+	    }
+
+	    private void SpawnPlayer()
         {
-            player = new Player(this, start);
+			Player = new Player(this, Level.StartLocation);
             FirePlayerSpawned();
         }
 
@@ -134,11 +116,6 @@ namespace WindowsGSM1.Gameplay
 
         #endregion
 
-        #region Bounds and collision
-
-
-        #endregion
-
         #region Update
 
         /// <summary>
@@ -147,87 +124,58 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         public void Update(GameTime gameTime,KeyboardState keyboardState)
         {
-            UpdateProjectiles(gameTime);
-
             // Pause while the player is dead or time is expired.
-            if (!Player.IsAlive || TimeRemaining == TimeSpan.Zero)
+            if (!Player.IsAlive)
             {
                 // Still want to perform physics on the player.
                 Player.ApplyPhysics(gameTime);
             }
             else
             {
-                timeRemaining -= gameTime.ElapsedGameTime;
-                Player.Update(gameTime, keyboardState);
-                UpdateGems(gameTime);
-
                 // Falling off the bottom of the level kills the player.
-                if (Player.BoundingRectangle.Top >= Height * Tile.Height)
+                if (Player.BoundingRectangle.Top >= Level.Height * Tile.Height)
                     OnPlayerKilled();
 
-                foreach (var obj in gameObjects)
-                {
-                    obj.Update(gameTime,keyboardState);
-                }
+	            UpdateGameObjects(gameTime, keyboardState);
 
                 // The player has reached the exit if they are standing on the ground and
                 // his bounding rectangle contains the center of the exit tile. They can only
                 // exit when they have collected all of the gems.
                 if (Player.IsAlive &&
                     Player.IsOnGround &&
-                    Player.BoundingRectangle.Contains(exit))
+					Player.BoundingRectangle.Contains(Level.ExitPosition))
                 {
                     OnExitReached();
                 }
             }
-
-            // Clamp the time remaining at zero.
-            if (timeRemaining < TimeSpan.Zero)
-                timeRemaining = TimeSpan.Zero;
         }
 
-        private void UpdateProjectiles(GameTime gameTime)
-        {
-            var hitProjectiles = projectiles.Where(b => b.Hit).ToArray();
-            //apply hit actions
-            Array.ForEach(hitProjectiles, h => h.OnHit());
-            //create explosions
-            Array.ForEach(hitProjectiles, h => _explosionMaster.AddExplosion(h.Explosion, gameTime));
+		/// <summary>
+		/// Manages game object collection: adds new objects, removes dead
+		/// </summary>
+		/// <param name="gameTime"></param>
+		/// <param name="keyboardState"></param>
+	    private void UpdateGameObjects(GameTime gameTime, KeyboardState keyboardState)
+	    {
+			//manage new objects
+			_gameObjects.AddRange(_newObjects);
+			_movableObjects.AddRange(_newObjects.Where(o=>o is MovableGameObject).ToArray());
+			_newObjects.Clear();
 
-            //remove hit projectiles
-            projectiles = projectiles.Except(hitProjectiles).ToList();
-        }
+			var deadObjects = new List<GameObject>();
 
-        /// <summary>
-        /// Animates each gem and checks to allows the player to collect them.
-        /// </summary>
-        private void UpdateGems(GameTime gameTime)
-        {
-            for (int i = 0; i < gems.Count; ++i)
-            {
-                Gem gem = gems[i];
-
-                gem.Update(gameTime);
-
-                if (gem.BoundingCircle.Intersects(Player.BoundingRectangle))
-                {
-                    gems.RemoveAt(i--);
-                    OnGemCollected(gem, Player);
-                }
-            }
-        }
-
-        /// <summary>
-        /// Called when a gem is collected.
-        /// </summary>
-        /// <param name="gem">The gem that was collected.</param>
-        /// <param name="collectedBy">The player who collected this gem.</param>
-        private void OnGemCollected(Gem gem, Player collectedBy)
-        {
-            score += Gem.PointValue;
-
-            gem.OnCollected(collectedBy);
-        }
+			foreach (var obj in _gameObjects)
+			{
+				if (!obj.IsDead)
+					obj.Update(gameTime, keyboardState);
+				else
+				{
+					deadObjects.Add(obj);
+				}
+			}
+			_gameObjects = _gameObjects.Except(deadObjects).ToList();
+			_movableObjects = _movableObjects.Except(deadObjects).ToList();
+	    }
 
         /// <summary>
         /// Called when the player is killed.
@@ -248,7 +196,7 @@ namespace WindowsGSM1.Gameplay
         {
             Player.OnReachedExit();
             exitReachedSound.Play();
-            reachedExit = true;
+            ReachedExit = true;
         }
 
         /// <summary>
@@ -256,7 +204,7 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         public void StartNewLife()
         {
-            Player.Reset(start);
+			Player.Reset(Level.StartLocation);
         }
 
         #endregion
@@ -268,37 +216,18 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            DrawTiles(spriteBatch);
-            foreach (Gem gem in gems)
-                gem.Draw(gameTime, spriteBatch);
-
-            Player.Draw(gameTime, spriteBatch, false);
-
-            foreach (var obj in gameObjects)
+            foreach (var obj in _gameObjects)
             {
-                obj.Draw(gameTime, spriteBatch, false);
+				obj.Draw(gameTime, spriteBatch, _debugMode);
             }
 
         }
 
         #endregion
 
-        public void CreateBullet(Vector2 startPos, float movement, GameTime gameTime)
-        {
-            _explosionMaster.AddExplosion(startPos, 4, 2f, 360, 100f, gameTime);
-            var bullet = new Bullet(this, startPos, (int) movement, "Player");
-            bullet.OnPlayerHit = OnPlayerKilled;
-            gameObjects.Add(bullet);
-            projectiles.Add(bullet);
-        }
-
-        public TileBomb CreateTilebomb(Vector2 vector2, int direction)
-        {
-            var bomb = new TileBomb(this, vector2, direction);
-            gameObjects.Add(bomb);
-            projectiles.Add(bomb);
-
-            return bomb;
-        }
+		public IEnumerable<MovableGameObject> GetMovables()
+		{
+			return _movableObjects.Cast<MovableGameObject>();
+		}
     }
 }

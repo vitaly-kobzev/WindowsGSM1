@@ -9,52 +9,135 @@ using Microsoft.Xna.Framework.Input;
 
 namespace WindowsGSM1.Gameplay
 {
-    public abstract class GameObject
+    /// <summary>
+    /// descendant of GameObject with physics support
+    /// </summary>
+    public abstract class MovableGameObject : GameObject
     {
-        protected Engine _engine;
+        private Vector2 _positionBeforeUpdate;
 
-        protected Texture2D _texture;
+        private Rectangle _previousBounds;
 
-        protected Rectangle _localBounds;
+        protected MovableGameObject(Engine engine) : base(engine)
+        {}
 
-        protected virtual Vector2 Origin { get{return new Vector2(_texture.Width/2f,_texture.Height);} }
+        protected abstract void UpdateInternal(GameTime gameTime, KeyboardState keyboardState);
 
-        // Physics state
-        public Vector2 Position { get; set; }
+		protected abstract void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions);
 
-        public Rectangle BoundingRectangle
+        public override void Update(GameTime gameTime, KeyboardState keyboardState)
         {
-            get
-            {
-                int left = (int)Math.Round(Position.X - Origin.X) + _localBounds.X;
-                int top = (int)Math.Round(Position.Y - Origin.Y) + _localBounds.Y;
-
-                return new Rectangle(left, top, _localBounds.Width, _localBounds.Height);
-            }
+            //flow of update is:
+            //save initial position
+            _positionBeforeUpdate = Position;
+            //do any kind of adjustments
+            UpdateInternal(gameTime, keyboardState);
+            //do collision check
+            var collisions = DoCollisionCheck();
+            //let collisions to be handled in a custom way
+            HandleCollisionsInternal(gameTime, collisions);
         }
 
-        protected GameObject(Engine engine)
+        protected virtual CollisionCheckResult DoCollisionCheck()
         {
-            _engine = engine;
+            var result = new CollisionCheckResult {PositionBeforeUpdate = _positionBeforeUpdate, PositionOfCollision = Position};
+
+	        CheckTileCollisions(ref result);
+
+			if(!result.HitImpassable)
+				CheckMovableCollisions(ref result);
+
+            return result;
         }
 
-        public abstract void LoadContent(ContentManager contentManager);
+	    private void CheckMovableCollisions(ref CollisionCheckResult result)
+	    {
+			Rectangle bounds = BoundingRectangle;
 
-        public abstract void Update(GameTime gameTime, KeyboardState keyboardState);
+		    foreach (var obj in _engine.GetMovables())
+		    {
+			    Vector2 depth = bounds.GetIntersectionDepth(obj.BoundingRectangle);
 
-        protected abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);
+				if (depth != Vector2.Zero)
+				{
+					result.HitImpassable = true;
+					result.CollidedObject = obj;
+				}
+		    }
+	    }
 
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch, bool debugMode)
-        {
-            if (debugMode)
-            {
-                var rectTex = new Texture2D(_engine.GraphicsDevice, 1, 1);
-                rectTex.SetData(new[] { Color.Red });
+	    private void CheckTileCollisions(ref CollisionCheckResult result)
+		{
+			Rectangle bounds = BoundingRectangle;
 
-                spriteBatch.Draw(rectTex, BoundingRectangle, Color.Red);
-            }
+			int leftTile = (int)Math.Floor((float)bounds.Left / Tile.Width);
+			int rightTile = (int)Math.Ceiling(((float)bounds.Right / Tile.Width)) - 1;
+			int topTile = (int)Math.Floor((float)bounds.Top / Tile.Height);
+			int bottomTile = (int)Math.Ceiling(((float)bounds.Bottom / Tile.Height)) - 1;
 
-            Draw(gameTime, spriteBatch);
-        }
+			// Reset flag to search for ground collision.
+			bool isOnGround = false;
+
+			// For each potentially colliding tile,
+			for (int y = topTile; y <= bottomTile; ++y)
+			{
+				for (int x = leftTile; x <= rightTile; ++x)
+				{
+					GameObject collidedTile = null;
+					// If this tile is collidable,
+					TileCollision collision = _engine.Level.GetCollision(x, y, out collidedTile);
+					if (collision != TileCollision.Passable)
+					{
+						// Determine collision depth (with direction) and magnitude.
+						Rectangle tileBounds = _engine.Level.GetBounds(x, y);
+						Vector2 depth = bounds.GetIntersectionDepth(tileBounds);
+						if (depth != Vector2.Zero)
+						{
+							float absDepthX = Math.Abs(depth.X);
+							float absDepthY = Math.Abs(depth.Y);
+
+							result.HitImpassable = true;
+							result.CollidedObject = collidedTile;
+
+							// Resolve the collision along the shallow axis.
+							if (absDepthY < absDepthX)
+							{
+								// If we crossed the top of a tile, we are on the ground.
+								if (_previousBounds.Bottom <= tileBounds.Top)
+									isOnGround = true;
+
+								// Resolve the collision along the Y axis.
+								Position = new Vector2(Position.X, Position.Y + depth.Y);
+
+								// Perform further collisions with the new bounds.
+								bounds = BoundingRectangle;
+							}
+							else
+							{
+								// Resolve the collision along the X axis.
+								Position = new Vector2(Position.X + depth.X, Position.Y);
+
+								// Perform further collisions with the new bounds.
+								bounds = BoundingRectangle;
+							}
+						}
+					}
+				}
+			}
+			// Save the new bounds bottom.
+			_previousBounds = bounds;
+			result.IsOnGround = isOnGround;
+		}
+
+    }
+
+    public struct CollisionCheckResult
+    {
+        public bool IsOnGround { get; set; }
+        public Vector2 PositionBeforeUpdate { get; set; }
+		public Vector2 PositionOfCollision { get; set; }
+        public bool HitImpassable { get; set; }
+
+		public GameObject CollidedObject { get; set; }
     }
 }

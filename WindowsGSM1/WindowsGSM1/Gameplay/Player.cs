@@ -63,11 +63,6 @@ namespace WindowsGSM1.Gameplay
         private int ShotBuffer;
         private int ThrowBuffer;
 
-        // Input configuration
-        private const float MoveStickScale = 1.0f;
-        private const float AccelerometerScale = 1.5f;
-        private const Buttons JumpButton = Buttons.A;
-
         /// <summary>
         /// Gets whether or not the player's feet are on the ground.
         /// </summary>
@@ -157,8 +152,7 @@ namespace WindowsGSM1.Gameplay
 
             if (isFiring && ShotBuffer > ShotDelay)
             {
-                _engine.CreateBullet(
-                    new Vector2 { X = Position.X + direction*30, Y = Position.Y - sprite.Animation.FrameHeight / 1.5f },
+                CreateBullet(new Vector2 { X = Position.X + direction*30, Y = Position.Y - sprite.Animation.FrameHeight / 1.5f },
                     direction, gameTime);
                 ShotBuffer = 0;
             }
@@ -173,7 +167,7 @@ namespace WindowsGSM1.Gameplay
                     }
                     else if (ThrowBuffer > ThrowDelay)
                     {
-                        TileBomb = _engine.CreateTilebomb(
+                        TileBomb = CreateTilebomb(
                             new Vector2 {X = Position.X + direction*10, Y = Position.Y - sprite.Animation.FrameHeight},
                             direction);
                         ThrowBuffer = 0;
@@ -184,15 +178,15 @@ namespace WindowsGSM1.Gameplay
             ApplyPhysics(gameTime);
         }
 
-        protected override void HandleCollisionsInternal(CollisionCheckResult collisions)
+        protected override void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions)
         {
             IsOnGround = collisions.IsOnGround;
 
             // If the collision stopped us from moving, reset the velocity to zero.
-            if (Position.X == collisions.PositionBeforeCheck.X)
+            if (Position.X == collisions.PositionBeforeUpdate.X)
                 velocity.X = 0;
 
-            if (Position.Y == collisions.PositionBeforeCheck.Y)
+            if (Position.Y == collisions.PositionBeforeUpdate.Y)
                 velocity.Y = 0;
 
             if (IsAlive && IsOnGround)
@@ -375,9 +369,34 @@ namespace WindowsGSM1.Gameplay
             sprite.Draw(gameTime, spriteBatch, Position, flip);
         }
 
-        Vector2 IFocusable.Position
+	    public override void OnDead()
+	    {
+		    OnKilled(null);
+	    }
+
+	    public override void OnHit()
+	    {
+		    IsDead = true;
+	    }
+
+	    Vector2 IFocusable.Position
         {
             get { return Position; }
         }
+
+		public void CreateBullet(Vector2 startPos, float movement, GameTime gameTime)
+		{
+			_engine.ExplosionMaster.AddExplosion(startPos, 4, 2f, 360, 100f, gameTime);
+			var bullet = new Bullet(_engine, startPos, (int)movement, "Player");
+			_engine.AddGameObject(bullet);
+		}
+
+		public TileBomb CreateTilebomb(Vector2 vector2, int direction)
+		{
+			var bomb = new TileBomb(_engine, vector2, direction);
+			_engine.AddGameObject(bomb);
+
+			return bomb;
+		}
     }
 }

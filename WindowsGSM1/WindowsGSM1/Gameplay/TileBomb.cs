@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace WindowsGSM1.Gameplay
 {
-    public class TileBomb : MovableGameObject, IProjectile
+    public class TileBomb : MovableGameObject
     {
 
         public string Source { get; private set; }
@@ -57,13 +57,13 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
-        public void OnHit()
+        public override void OnHit()
         {
-            var tile = new Tile(GeneratedTile, TileCollision.Impassable, _engine.Content.Load<Texture2D>("Sprites/wallhit"));
+            //var tile = new Tile(GeneratedTile, TileCollision.Impassable, _engine.Content.Load<Texture2D>("Sprites/wallhit"));
 
             var x = (int) Position.X/Tile.Width;
             var y = (int)Position.Y / Tile.Height;
-            _engine.tiles[x, y] = tile;
+            //_engine.tiles[x, y] = tile;
         }
 
         public Texture2D GeneratedTile { get; set; }
@@ -124,7 +124,7 @@ namespace WindowsGSM1.Gameplay
             Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
         }
 
-        protected override void HandleCollisionsInternal(CollisionCheckResult collisions)
+        protected override void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions)
         {
             Hit = collisions.HitImpassable;
         }
@@ -166,5 +166,10 @@ namespace WindowsGSM1.Gameplay
             // Draw the current frame.
             spriteBatch.Draw(_texture, Position, null, Color.White, rotation, origin, 1.0f, SpriteEffects.None, 1);
         }
+
+	    public override void OnDead()
+	    {
+		    //same
+	    }
     }
 }

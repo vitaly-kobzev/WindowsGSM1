@@ -8,7 +8,9 @@
 #endregion
 
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 
 namespace WindowsGSM1.Gameplay
 {
@@ -46,14 +48,9 @@ namespace WindowsGSM1.Gameplay
     /// <summary>
     /// Stores the appearance and collision behavior of a tile.
     /// </summary>
-    public struct Tile : IHittable
+    public class Tile : GameObject
     {
-        public Texture2D Texture;
         public TileCollision Collision;
-
-        private Texture2D HitAnimation;
-
-        private int Health;
 
         public const int Width = 40;
         public const int Height = 32;
@@ -63,23 +60,36 @@ namespace WindowsGSM1.Gameplay
         /// <summary>
         /// Constructs a new tile.
         /// </summary>
-        public Tile(Texture2D texture, TileCollision collision, Texture2D hitAnimation)
+		public Tile(Texture2D texture, Vector2 position, TileCollision collision, Engine engine):base(engine)
         {
-            Texture = texture;
+            _texture = texture;
+	        Position = position;
             Collision = collision;
-            HitAnimation = hitAnimation;
-            Health = 3;
         }
 
-        public Texture2D GetHitAnimation()
-        {
-            return HitAnimation;
-        }
+	    public override void LoadContent(ContentManager contentManager)
+	    {
+	    }
 
-        public bool Dead { get { return Health <= 0; }}
-        public void ProcessHit()
-        {
-            Health--;
-        }
+	    public override void Update(GameTime gameTime, KeyboardState keyboardState)
+	    {
+	    }
+
+	    protected override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+	    {
+			if(_texture!=null)
+				spriteBatch.Draw(_texture, Position, Color.White);
+	    }
+
+	    public override void OnDead()
+	    {
+		    var v = Position/Size;
+			_engine.Level.RemoveTileAt((int)v.X,(int)v.Y);
+	    }
+
+	    public override void OnHit()
+	    {
+		    IsDead = true;
+	    }
     }
 }

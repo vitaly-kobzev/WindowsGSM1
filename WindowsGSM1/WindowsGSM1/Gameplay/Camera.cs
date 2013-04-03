@@ -86,17 +86,17 @@ namespace WindowsGSM1.Gameplay
         private int _boundaryLeft;
         private Rectangle _titleSafeArea;
 
-        private Engine _level;
+        private Engine _engine;
 
         protected float _viewportHeight;
         protected float _viewportWidth;
 
-        public Camera2D(Game game, Engine level)
+        public Camera2D(Game game, Engine engine)
             : base(game)
         {
             game.Components.Add(this);
 
-            _level = level;
+            _engine = engine;
 
             _titleSafeArea = new Rectangle();
             _titleSafeArea.Width = 300;
@@ -167,7 +167,7 @@ namespace WindowsGSM1.Gameplay
 
         private void ApplyBoundaries()
         {
-            _boundaryRight = _level.Width * 32;
+            _boundaryRight = _engine.Level.Width * 32;
 
             if (_position.Y > _boundaryBottom)
                 _position.Y = _boundaryBottom;

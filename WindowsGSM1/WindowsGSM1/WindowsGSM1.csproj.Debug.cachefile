@@ -1,8 +1,6 @@
 Content\background.xnb
 Content\blank.xnb
 Content\gradient.xnb
-Content\menufont.xnb
-Content\gamefont.xnb
 Content\Tiles\BlockA0.xnb
 Content\Tiles\BlockA1.xnb
 Content\Tiles\BlockA2.xnb
@@ -23,13 +21,6 @@ Content\Sprites\Player\Run.xnb
 Content\Overlays\you_died.xnb
 Content\Overlays\you_lose.xnb
 Content\Overlays\you_win.xnb
-Content\Sounds\MonsterKilled.xnb
-Content\Sounds\Music.xnb
-Content\Sounds\Powerup.xnb
-Content\Sounds\GemCollected.xnb
-Content\Sounds\PlayerFall.xnb
-Content\Sounds\PlayerJump.xnb
-Content\Sounds\PlayerKilled.xnb
 Content\Backgrounds\Layer0_0.xnb
 Content\Backgrounds\Layer0_1.xnb
 Content\Backgrounds\Layer0_2.xnb
@@ -39,7 +30,6 @@ Content\Backgrounds\Layer1_2.xnb
 Content\Backgrounds\Layer2_0.xnb
 Content\Backgrounds\Layer2_1.xnb
 Content\Backgrounds\Layer2_2.xnb
-Content\Sounds\ExitReached.xnb
 Content\Sprites\Player\RunTestgun.xnb
 Content\Sprites\Bullet.xnb
 Content\Sprites\explosion.xnb
@@ -47,6 +37,16 @@ Content\Sprites\wallhit.xnb
 Content\Sprites\Player\Idle_armed.xnb
 Content\Sprites\Player\Idle_armed2.xnb
 Content\Sprites\Tilebomb.xnb
+Content\menufont.xnb
+Content\gamefont.xnb
+Content\Sounds\ExitReached.xnb
+Content\Sounds\GemCollected.xnb
+Content\Sounds\MonsterKilled.xnb
+Content\Sounds\Music.xnb
+Content\Sounds\PlayerFall.xnb
+Content\Sounds\PlayerJump.xnb
+Content\Sounds\PlayerKilled.xnb
+Content\Sounds\Powerup.xnb
 Content\Sounds\MonsterKilled.wma
 Content\Sounds\Music.wma
 Content\Sounds\Powerup.wma

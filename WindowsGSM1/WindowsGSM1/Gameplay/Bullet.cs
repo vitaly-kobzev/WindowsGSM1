@@ -10,15 +10,11 @@ using Microsoft.Xna.Framework.Input;
 namespace WindowsGSM1.Gameplay
 {
 
-    public class Bullet : MovableGameObject, IProjectile
+    public class Bullet : MovableGameObject
     {
         public string Source { get; private set; }
 
-        public bool Hit { get; private set; }
-
         private Vector2 _origin;
-
-        private Engine Level;
 
         public int Movement;
 
@@ -42,9 +38,9 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
-        public void OnHit()
+        public override void OnHit()
         {
-            //do nothing for now
+	        IsDead = true;
         }
 
         protected override Vector2 Origin
@@ -59,8 +55,6 @@ namespace WindowsGSM1.Gameplay
             Movement = movement;
             Position = startingPos;
             Source = source;
-
-            Hit = false;
 
             LoadContent(_engine.Content);
         }
@@ -77,8 +71,18 @@ namespace WindowsGSM1.Gameplay
             ApplyPhysics(gameTime);
         }
 
-        protected override void HandleCollisionsInternal(CollisionCheckResult collisions)
+        protected override void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions)
         {
+			if (collisions.HitImpassable)
+			{
+				_engine.ExplosionMaster.AddExplosion(Explosion,gameTime);
+				IsDead = true;
+
+				if (collisions.CollidedObject != null) //if what we hit isn't just a tile or screen border
+				{
+					collisions.CollidedObject.OnHit();
+				}
+			}
         }
 
         public void ApplyPhysics(GameTime gameTime)
@@ -93,18 +97,6 @@ namespace WindowsGSM1.Gameplay
             Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
         }
 
-        private void ProcessHit(int x, int y)
-        {
-            Hit = true;
-            var victim = Level.GetHitVictim(x, y);
-            if (victim != null)
-            {
-                victim.ProcessHit();
-                HitTexture = victim.GetHitAnimation();
-            }
-
-        }
-
         protected override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
             // Calculate the source rectangle of the current frame.
@@ -113,5 +105,8 @@ namespace WindowsGSM1.Gameplay
             // Draw the current frame.
             spriteBatch.Draw(_texture, Position, null, Color.White, 0.0f, origin, 1.0f, SpriteEffects.None, 1);
         }
+
+	    public override void OnDead()
+	    {}
     }
 }
