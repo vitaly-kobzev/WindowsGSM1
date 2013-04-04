@@ -261,7 +261,7 @@ namespace WindowsGSM1
             Vector2 center = new Vector2(titleSafeArea.X + titleSafeArea.Width / 2.0f,
                                          titleSafeArea.Y + titleSafeArea.Height / 2.0f);
 
-	        string hudString = string.Format("{0} {1}",Mouse.GetState().X.ToString(),Mouse.GetState().Y.ToString());
+			string hudString = string.Format("HUD");
 
 			DrawShadowedString(hudFont, hudString, hudLocation, Color.Yellow);
 

@@ -99,7 +99,7 @@ namespace WindowsGSM1.Gameplay
                         Position = hitData.HitPosition,
                         Size = 25.0f
                     }, hitData.HitTime);
-		    IsDead = true;
+		   Kill();
 	    }
     }
 }

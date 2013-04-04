@@ -66,17 +66,15 @@ namespace WindowsGSM1.Gameplay
         /// <value>The focus.</value>
         IFocusable Focus { get; set; }
 
-        /// <summary>
-        /// Determines whether the target is in view given the specified position.
-        /// This can be used to increase performance by not drawing objects
-        /// directly in the viewport
-        /// </summary>
-        /// <param name="position">The position.</param>
-        /// <param name="texture">The texture.</param>
-        /// <returns>
-        ///     <c>true</c> if the target is in view at the specified position; otherwise, <c>false</c>.
-        /// </returns>
-        bool IsInView(Vector2 position, Texture2D texture);
+		/// <summary>
+		/// Determines whether the target is in view given the specified position.
+		/// This can be used to increase performance by not drawing objects
+		/// directly in the viewport
+		/// </summary>
+		/// <returns>
+		///     <c>true</c> if the target is in view at the specified position; otherwise, <c>false</c>.
+		/// </returns>
+		bool IsInView(GameObject gameObject);
 
 		event EventHandler<Camera2D.CameraEventArgs> CameraMoved;
     }
@@ -203,18 +201,24 @@ namespace WindowsGSM1.Gameplay
         /// <returns>
         ///     <c>true</c> if [is in view] [the specified position]; otherwise, <c>false</c>.
         /// </returns>
-        public bool IsInView(Vector2 position, Texture2D texture)
+		public bool IsInView(GameObject gameObject)
         {
             // If the object is not within the horizontal bounds of the screen
+		    var position = gameObject.Position;
 
-            if ((position.X + texture.Width) < (Position.X - Origin.X) || (position.X) > (Position.X + Origin.X))
-                return false;
+		    var texture = gameObject.Texture;
 
-            // If the object is not within the vertical bounds of the screen
-            if ((position.Y + texture.Height) < (Position.Y - Origin.Y) || (position.Y) > (Position.Y + Origin.Y))
-                return false;
+		    if (texture != null) //dont kill the tiles
+		    {
 
-            // In View
+			    if ((position.X + texture.Width) < (Position.X - Origin.X) || (position.X) > (Position.X + Origin.X))
+				    return false;
+
+			    // If the object is not within the vertical bounds of the screen
+			    if ((position.Y + texture.Height) < (Position.Y - Origin.Y) || (position.Y) > (Position.Y + Origin.Y))
+				    return false;
+		    }
+		    // In View
             return true;
         }
 

@@ -74,6 +74,16 @@ namespace WindowsGSM1.Gameplay
 			}
 		}
 
+		public void Kill()
+		{
+			IsDead = true;
+		}
+
+		public Texture2D Texture
+		{
+			get { return _texture; }
+		}
+
 		public abstract void OnDead();
 		public abstract void OnHit(HitData hitData);
     }

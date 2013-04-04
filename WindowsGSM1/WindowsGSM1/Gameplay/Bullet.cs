@@ -14,11 +14,9 @@ namespace WindowsGSM1.Gameplay
     {
         public string Source { get; private set; }
 
-        private Vector2 _origin;
+		public double Rotation;
 
-        public int Movement;
-
-        private const float MoveSpeed = 175.0f;
+        private const float MoveSpeed = 350.0f;
 
         public Action OnPlayerHit { get; set; }
 
@@ -40,14 +38,14 @@ namespace WindowsGSM1.Gameplay
 
         public override void OnHit(HitData hitData)
         {
-	        IsDead = true;
+	        Kill();
         }
 
         public Texture2D HitTexture { get; set; }
 
-        public Bullet(Engine engine, Vector2 startingPos, int movement, string source) : base(engine)
+        public Bullet(Engine engine, Vector2 startingPos, double rotation, string source) : base(engine)
         {
-            Movement = movement;
+			Rotation = rotation;
             Position = startingPos;
             Source = source;
 
@@ -69,11 +67,12 @@ namespace WindowsGSM1.Gameplay
 			if (collisions.HitImpassable)
 			{
 				_engine.ExplosionMaster.AddExplosion(Explosion,gameTime);
-				IsDead = true;
+				Kill();
 
 				if (collisions.CollidedObject != null) //if what we hit isn't just a tile or screen border
 				{
-					collisions.CollidedObject.OnHit(new HitData{Direction = Movement,HitPosition = Position,HitTime = gameTime});
+					//TODO USE ROTATION
+					collisions.CollidedObject.OnHit(new HitData{Direction = 1,HitPosition = Position,HitTime = gameTime});
 				}
 			}
         }
@@ -82,12 +81,14 @@ namespace WindowsGSM1.Gameplay
         {
             float elapsed = (float) gameTime.ElapsedGameTime.TotalSeconds;
 
-            // Base velocity is a combination of horizontal movement control and
-            // acceleration downward due to gravity.
-            var velocity = new Vector2 {X = Movement*MoveSpeed*elapsed, Y = 0};
+			double hipothenus = MoveSpeed*elapsed;
+			var x = hipothenus * Math.Cos(Rotation);
+			var y = hipothenus * Math.Sin(Rotation);
+
+            var velocity = new Vector2 {X = (float) x, Y = (float) y};
 
             Position += velocity;
-            Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
+            Position = new Vector2(Position.X, Position.Y);
         }
 
         protected override void Draw(GameTime gameTime, SpriteBatch spriteBatch)

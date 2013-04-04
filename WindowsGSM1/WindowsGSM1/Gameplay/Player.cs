@@ -57,7 +57,7 @@ namespace WindowsGSM1.Gameplay
         private const float MaxFallSpeed = 550.0f;
         private const float JumpControlPower = 0.14f;
 
-        private const int ShotDelay = 300;
+        private const int ShotDelay = 150;
         private const int ThrowDelay = 900;
 
         private int ShotBuffer;
@@ -85,6 +85,8 @@ namespace WindowsGSM1.Gameplay
 	    private Texture2D _blank;
 
 	    private Vector2 _crosshairPos;
+
+	    private double _gunRotation;
 
         /// <summary>
         /// Constructors a new player.
@@ -177,7 +179,7 @@ namespace WindowsGSM1.Gameplay
             if (isFiring && ShotBuffer > ShotDelay)
             {
                 CreateBullet(GunPoint,
-                    direction, gameTime);
+					_gunRotation, gameTime);
                 ShotBuffer = 0;
             }
             else
@@ -300,6 +302,8 @@ namespace WindowsGSM1.Gameplay
             // Apply velocity.
             Position += velocity * elapsed;
             Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
+
+			_gunRotation = Math.Atan2(_crosshairPos.Y - GunPoint.Y, _crosshairPos.X - GunPoint.X);
         }
 
         /// <summary>
@@ -407,7 +411,7 @@ namespace WindowsGSM1.Gameplay
 
 	    public override void OnHit(HitData hitData)
 	    {
-		    IsDead = true;
+		    Kill();
 	    }
 
 	    Vector2 IFocusable.Position
@@ -415,10 +419,10 @@ namespace WindowsGSM1.Gameplay
             get { return Position; }
         }
 
-		public void CreateBullet(Vector2 startPos, float movement, GameTime gameTime)
+		public void CreateBullet(Vector2 startPos, double rotation, GameTime gameTime)
 		{
 			_engine.ExplosionMaster.AddExplosion(startPos, 4, 2f, 360, 100f, gameTime);
-			var bullet = new Bullet(_engine, startPos, (int)movement, "Player");
+			var bullet = new Bullet(_engine, startPos, rotation, "Player");
 			_engine.AddGameObject(bullet);
 		}
 

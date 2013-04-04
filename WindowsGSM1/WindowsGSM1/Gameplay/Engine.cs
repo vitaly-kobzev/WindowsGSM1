@@ -197,7 +197,7 @@ namespace WindowsGSM1.Gameplay
 		/// <param name="gameTime"></param>
 		/// <param name="keyboardState"></param>
 	    private void UpdateGameObjects(GameTime gameTime, KeyboardState keyboardState)
-	    {
+		{
 			//manage new objects
 			_gameObjects.AddRange(_newObjects);
 			_movableObjects.AddRange(_newObjects.Where(o=>o is MovableGameObject).ToArray());
@@ -216,9 +216,20 @@ namespace WindowsGSM1.Gameplay
 			}
 			_gameObjects = _gameObjects.Except(deadObjects).ToList();
 			_movableObjects = _movableObjects.Except(deadObjects).ToList();
+
+			KillInvisibleObjects();
 	    }
 
-        /// <summary>
+		private void KillInvisibleObjects()
+		{
+			foreach (var gameObject in _movableObjects)
+			{
+				if(!Camera.IsInView(gameObject) && gameObject != Player)
+					gameObject.Kill();
+			}
+		}
+
+		/// <summary>
         /// Called when the player is killed.
         /// </summary>
         /// <param name="killedBy">
