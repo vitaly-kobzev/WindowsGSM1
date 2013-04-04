@@ -26,6 +26,14 @@ namespace WindowsGSM1.Gameplay
 			}
 		}
 
+		public event EventHandler<CrosshairArgs> CrosshairMoved;
+
+		private void OnCrosshairMoved(CrosshairArgs e)
+		{
+			EventHandler<CrosshairArgs> handler = CrosshairMoved;
+			if (handler != null) handler(this, e);
+		}
+
 		public Crosshair(Engine engine)
 		{
 			_engine = engine;
@@ -54,15 +62,35 @@ namespace WindowsGSM1.Gameplay
 
 		public void Update(GameTime gameTime, MouseState state)
 		{
-			_position.X += state.X - _initialState.X;
-			_position.Y += state.Y - _initialState.Y;
+			int dx = state.X - _initialState.X;
+			int dy = state.Y - _initialState.Y;
+
+			_position.X += dx;
+			_position.Y += dy;
 
 			_initialState = state;
+
+			OnCrosshairMoved(new CrosshairArgs(new CrosshairData{Position = _position}));
 		}
 
 		public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
 		{
-			spriteBatch.Draw(_texture, _position, null, Color.White, 0.0f,  new Vector2(12,12), 1.0f, SpriteEffects.None, 1);
+			spriteBatch.Draw(_texture, _position, null, Color.White, 0.0f, Origin, 1.0f, SpriteEffects.None, 1);
 		}
+	}
+
+	public class CrosshairArgs : EventArgs
+	{
+		public CrosshairData Data { get; private set; }
+
+		public CrosshairArgs(CrosshairData data)
+		{
+			Data = data;
+		}
+	}
+
+	public struct CrosshairData
+	{
+		public Vector2 Position { get; set; }
 	}
 }

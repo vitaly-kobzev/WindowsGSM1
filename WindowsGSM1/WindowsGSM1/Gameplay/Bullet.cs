@@ -54,7 +54,7 @@ namespace WindowsGSM1.Gameplay
             //LoadContent(_engine.Content);
         }
 
-        public override void LoadContent(ContentManager content)
+        public override void Initialize(ContentManager content)
         {
             _texture = content.Load<Texture2D>("Sprites/Bullet");
         }

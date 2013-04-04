@@ -88,7 +88,7 @@ namespace WindowsGSM1.Gameplay
             get { return _origin; }
         }
 
-        public override void LoadContent(ContentManager content)
+        public override void Initialize(ContentManager content)
         {
             _texture = content.Load<Texture2D>("Sprites/Tilebomb");
             GeneratedTile = content.Load<Texture2D>("Tiles/BlockB1");

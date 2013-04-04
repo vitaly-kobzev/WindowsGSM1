@@ -7,7 +7,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace WindowsGSM1.Gameplay
 {
-    public struct ExplosionData
+    public struct ExplosionData 
     {
         public Vector2 Position;
         public int NumberOfParticles;

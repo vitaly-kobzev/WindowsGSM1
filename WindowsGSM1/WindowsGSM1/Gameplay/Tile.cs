@@ -67,7 +67,7 @@ namespace WindowsGSM1.Gameplay
             Collision = collision;
         }
 
-	    public override void LoadContent(ContentManager contentManager)
+	    public override void Initialize(ContentManager contentManager)
 	    {
 	    }
 

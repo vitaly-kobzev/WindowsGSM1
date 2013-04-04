@@ -42,7 +42,7 @@ namespace WindowsGSM1.Gameplay
             _engine = engine;
         }
 
-        public abstract void LoadContent(ContentManager contentManager);
+        public abstract void Initialize(ContentManager contentManager);
 
         public abstract void Update(GameTime gameTime, KeyboardState keyboardState);
 

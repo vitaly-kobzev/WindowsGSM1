@@ -82,6 +82,9 @@ namespace WindowsGSM1.Gameplay
         private int direction = 1;
         private bool isThrowing;
 
+	    private Texture2D _blank;
+
+	    private Vector2 _crosshairPos;
 
         /// <summary>
         /// Constructors a new player.
@@ -100,7 +103,7 @@ namespace WindowsGSM1.Gameplay
         /// <summary>
         /// Loads the player sprite sheet and sounds.
         /// </summary>
-        public override void LoadContent(ContentManager contentManager)
+        public override void Initialize(ContentManager contentManager)
         {
             // Load animated textures.
             idleAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Idle_armed2"), 0.2f, true);
@@ -122,9 +125,30 @@ namespace WindowsGSM1.Gameplay
             fallSound = contentManager.Load<SoundEffect>("Sounds/PlayerFall");
 
 			sprite.PlayAnimation(idleAnimation);
+
+			_blank = new Texture2D(_engine.GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
+			_blank.SetData(new[] { Color.White });
+
+			_engine.SubscribeToCrosshairEvents(HandleCrosshairEvents);
         }
 
-        /// <summary>
+	    private void HandleCrosshairEvents(object sender, CrosshairArgs crosshairArgs)
+	    {
+		    _crosshairPos = crosshairArgs.Data.Position;
+	    }
+
+		private void DrawLine(SpriteBatch batch, Texture2D blank,
+			  float width, Color color, Vector2 point1, Vector2 point2)
+		{
+			float angle = (float)Math.Atan2(point2.Y - point1.Y, point2.X - point1.X);
+			float length = Vector2.Distance(point1, point2);
+
+			batch.Draw(blank, point1, null, color,
+					   angle, Vector2.Zero, new Vector2(length, width),
+					   SpriteEffects.None, 0);
+		}
+
+	    /// <summary>
         /// Resets the player to life.
         /// </summary>
         /// <param name="position">The position to come to life at.</param>
@@ -152,7 +176,7 @@ namespace WindowsGSM1.Gameplay
 
             if (isFiring && ShotBuffer > ShotDelay)
             {
-                CreateBullet(new Vector2 { X = Position.X + direction*30, Y = Position.Y - sprite.Animation.FrameHeight / 1.5f },
+                CreateBullet(GunPoint,
                     direction, gameTime);
                 ShotBuffer = 0;
             }
@@ -178,7 +202,12 @@ namespace WindowsGSM1.Gameplay
             ApplyPhysics(gameTime);
         }
 
-        protected override void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions)
+	    protected Vector2 GunPoint
+	    {
+			get { return new Vector2 {X = Position.X + direction*30, Y = Position.Y - sprite.Animation.FrameHeight/1.5f}; }
+	    }
+
+	    protected override void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions)
         {
             IsOnGround = collisions.IsOnGround;
 
@@ -359,6 +388,8 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         protected override void  Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
+			DrawLine(spriteBatch,_blank,3,Color.Red,GunPoint,_crosshairPos);
+
             // Flip the sprite to face the way we are moving.
             if (velocity.X > 0)
                 flip = SpriteEffects.FlipHorizontally;

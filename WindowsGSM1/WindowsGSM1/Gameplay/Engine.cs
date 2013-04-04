@@ -108,15 +108,25 @@ namespace WindowsGSM1.Gameplay
 
 		public void AddGameObjects(GameObject[] objects)
 		{
-			Array.ForEach(objects, o => o.LoadContent(Content));
+			Array.ForEach(objects, o => o.Initialize(Content));
 			_newObjects.AddRange(objects);
 		}
 
 		public void AddGameObject(GameObject obj)
 	    {
-			obj.LoadContent(Content);
+			obj.Initialize(Content);
 			_newObjects.Add(obj);
 	    }
+
+		public void SubscribeToCrosshairEvents(EventHandler<CrosshairArgs> handler)
+		{
+			_crosshair.CrosshairMoved += handler;
+		}
+
+		public void UnsubscribeToCrosshairEvents(EventHandler<CrosshairArgs> handler)
+		{
+			_crosshair.CrosshairMoved -= handler;
+		}
 
 	    private void SpawnPlayer()
         {
