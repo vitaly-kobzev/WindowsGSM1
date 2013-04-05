@@ -52,7 +52,9 @@ namespace WindowsGSM1.Gameplay
             get { return _tiles.GetLength(1); }
         }
 
-        /// <summary>
+		public float GroundLevel { get{return Height*Tile.Height;} }
+
+	    /// <summary>
         /// Gets the collision mode of the tile at a particular location.
         /// This method handles tiles outside of the levels boundries by making it
         /// impossible to escape past the left or right edges, but allowing things

@@ -17,6 +17,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Media;
 using WindowsGSM1.Gameplay;
+using WindowsGSM1.Postprocessing;
 
 #endregion
 
@@ -39,8 +40,11 @@ namespace WindowsGSM1
         private Texture2D winOverlay;
         private Texture2D loseOverlay;
         private Texture2D diedOverlay;
+	    private Texture2D _background;
 
-        private Engine gameEngine;
+        private Engine _gameEngine;
+
+	    private GraphicalPostprocessor _postprocessor;
 
         private ParticleEngine _particleEngine;
 
@@ -93,32 +97,26 @@ namespace WindowsGSM1
             winOverlay = content.Load<Texture2D>("Overlays/you_win");
             loseOverlay = content.Load<Texture2D>("Overlays/you_lose");
             diedOverlay = content.Load<Texture2D>("Overlays/you_died");
+	        _background = content.Load<Texture2D>("Backgrounds/sunset");
 
             _particleEngine = new ParticleEngine(content);
 
-            //Known issue that you get exceptions if you use Media PLayer while connected to your PC
-            //See http://social.msdn.microsoft.com/Forums/en/windowsphone7series/thread/c8a243d2-d360-46b1-96bd-62b1ef268c66
-            //Which means its impossible to test this from VS.
-            //So we have to catch the exception and throw it away
-            try
-            {
-                MediaPlayer.IsRepeating = true;
-                MediaPlayer.Play(content.Load<Song>("Sounds/Music"));
-            }
-            catch { }
 
             // Load the level.
             string levelPath = string.Format("Content/Levels/{0}.txt", 0);
             using (Stream fileStream = TitleContainer.OpenStream(levelPath))
             {
-                gameEngine = new Engine(ScreenManager.Game.Services,_particleEngine);
-                gameEngine.GraphicsDevice = ScreenManager.GraphicsDevice;
+                _gameEngine = new Engine(ScreenManager.Game.Services,_particleEngine);
+                _gameEngine.GraphicsDevice = ScreenManager.GraphicsDevice;
 
-				_camera = new Camera2D(ScreenManager.Game, gameEngine);
+				_camera = new Camera2D(ScreenManager.Game, _gameEngine);
 
-				gameEngine.Initialize(fileStream, _camera);
+				_gameEngine.Initialize(fileStream, _camera);
 
-				_camera.Focus = gameEngine.Player;
+				_camera.Focus = _gameEngine.Player;
+				//todo: implement video setting for postprocessing
+				_postprocessor = new GraphicalPostprocessor(true);
+				_postprocessor.Initialize(ScreenManager.Game);
             }
 
             // once the load has finished, we use ResetElapsedTime to tell the game's
@@ -160,7 +158,7 @@ namespace WindowsGSM1
 
             if (IsActive)
             {
-                gameEngine.Update(gameTime,keyboardState);
+                _gameEngine.Update(gameTime,keyboardState);
                 _particleEngine.UpdateParticles(gameTime);
             }
         }
@@ -172,52 +170,7 @@ namespace WindowsGSM1
         /// </summary>
         public override void HandleInput(InputState input)
         {
-            if (input == null)
-                throw new ArgumentNullException("input");
-
-            // Look up inputs for the active player profile.
-            int playerIndex = (int)ControllingPlayer.Value;
-
-            keyboardState = Keyboard.GetState();
-
-            // The game pauses either if the user presses the pause button, or if
-            // they unplug the active gamepad. This requires us to keep track of
-            // whether a gamepad was ever plugged in, because we don't want to pause
-            // on PC if they are playing with a keyboard and have no gamepad at all!
-            bool gamePadDisconnected = !gamePadState.IsConnected &&
-                                       input.GamePadWasConnected[playerIndex];
-
-            if (input.IsPauseGame(ControllingPlayer) || gamePadDisconnected)
-            {
-                ScreenManager.AddScreen(new PauseMenuScreen(), ControllingPlayer);
-            }
-            else
-            {
-                // Otherwise move the player position.
-                Vector2 movement = Vector2.Zero;
-
-                if (keyboardState.IsKeyDown(Keys.Left))
-                    movement.X--;
-
-                if (keyboardState.IsKeyDown(Keys.Right))
-                    movement.X++;
-
-                if (keyboardState.IsKeyDown(Keys.Up))
-                    movement.Y--;
-
-                if (keyboardState.IsKeyDown(Keys.Down))
-                    movement.Y++;
-
-                Vector2 thumbstick = gamePadState.ThumbSticks.Left;
-
-                movement.X += thumbstick.X;
-                movement.Y -= thumbstick.Y;
-
-                if (movement.Length() > 1)
-                    movement.Normalize();
-
-                playerPosition += movement * 2;
-            }
+			keyboardState = Keyboard.GetState();
         }
 
 
@@ -226,52 +179,85 @@ namespace WindowsGSM1
         /// </summary>
         public override void Draw(GameTime gameTime)
         {
-            // This game has a blue background. Why? Because!
-            ScreenManager.GraphicsDevice.Clear(Color.CornflowerBlue);
+            ScreenManager.GraphicsDevice.Clear(Color.Black);
+
+	        _postprocessor.BeginDraw();
 
             var spriteBatch = ScreenManager.SpriteBatch;
-            //SpriteSortMode.FrontToBack,BlendState.AlphaBlend,SamplerState.AnisotropicClamp,DepthStencilState.Default,RasterizerState.CullClockwise,null,new Matrix()
-            spriteBatch.Begin(SpriteSortMode.BackToFront, null, null, null, null, null,_camera.Transform);
 
-            gameEngine.Draw(gameTime, spriteBatch);
+			DrawBackground(spriteBatch);
 
-            DrawHud();
+	        DrawObjects(gameTime, spriteBatch);
 
-            spriteBatch.End();
+	        DrawParticles(spriteBatch);
 
-            spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, null, null, null, null, _camera.Transform);
+	        DrawCrosshair(gameTime, spriteBatch);
 
-            _particleEngine.Draw(spriteBatch);
-
-            spriteBatch.End();
-
-			spriteBatch.Begin(SpriteSortMode.BackToFront, null, null, null, null, null, _camera.Transform);
-
-			gameEngine.DrawCrosshair(gameTime, spriteBatch);
-
-			spriteBatch.End();
-
+	        //execute postprocessing
             base.Draw(gameTime);
+
+			//Hud should be drawn in the last place - it shouldn't be affected by postprocessing
+			DrawHud(spriteBatch);
         }
 
-        private void DrawHud()
+	    private void DrawCrosshair(GameTime gameTime, SpriteBatch spriteBatch)
+	    {
+		    spriteBatch.Begin(SpriteSortMode.BackToFront, null, null, null, null, null, _camera.Transform);
+
+		    _gameEngine.DrawCrosshair(gameTime, spriteBatch);
+
+		    spriteBatch.End();
+	    }
+
+	    private void DrawParticles(SpriteBatch spriteBatch)
+	    {
+		    spriteBatch.Begin(SpriteSortMode.Deferred, BlendState.Additive, null, null, null, null, _camera.Transform);
+
+		    _particleEngine.Draw(spriteBatch);
+
+		    spriteBatch.End();
+	    }
+
+	    private void DrawObjects(GameTime gameTime, SpriteBatch spriteBatch)
+	    {
+		    spriteBatch.Begin(SpriteSortMode.BackToFront, null, null, null, null, null, _camera.Transform);
+
+		    _gameEngine.Draw(gameTime, spriteBatch);
+
+		    spriteBatch.End();
+	    }
+
+	    private void DrawBackground(SpriteBatch spriteBatch)
+	    {
+		    spriteBatch.Begin(0, BlendState.Opaque, SamplerState.LinearWrap, null, null);
+
+		    var rectangle = new Rectangle(0, 0, (ScreenManager.GraphicsDevice.Viewport.Width),(ScreenManager.GraphicsDevice.Viewport.Height));
+
+			var source = new Rectangle((int) (_camera.Position.X*0.1f), 0, _background.Width, _background.Height);
+
+		    spriteBatch.Draw(_background, rectangle,source, Color.White);
+
+			spriteBatch.End();
+	    }
+
+	    private void DrawHud(SpriteBatch spriteBatch)
         {
-            Rectangle titleSafeArea = _camera.TitleSafeArea;
-            Vector2 hudLocation = new Vector2(titleSafeArea.X, titleSafeArea.Y);
-            Vector2 center = new Vector2(titleSafeArea.X + titleSafeArea.Width / 2.0f,
-                                         titleSafeArea.Y + titleSafeArea.Height / 2.0f);
+            Vector2 hudLocation = _camera.TitleSafeArea;
+	        Vector2 center = _camera.Position;
 
 			string hudString = string.Format("HUD");
+
+			spriteBatch.Begin(SpriteSortMode.BackToFront, null, null, null, null, null, _camera.Transform);
 
 			DrawShadowedString(hudFont, hudString, hudLocation, Color.Yellow);
 
             // Draw score
 			float timeHeight = hudFont.MeasureString(hudString).Y;
-            DrawShadowedString(hudFont, "SCORE: " + gameEngine.Score.ToString(), hudLocation + new Vector2(0.0f, timeHeight * 1.2f), Color.Yellow);
+            DrawShadowedString(hudFont, "SCORE: " + _gameEngine.Score.ToString(), hudLocation + new Vector2(0.0f, timeHeight * 1.2f), Color.Yellow);
 
             // Determine the status overlay message to show.
             Texture2D status = null;
-            if (!gameEngine.Player.IsAlive)
+            if (!_gameEngine.Player.IsAlive)
             {
                 status = diedOverlay;
             }
@@ -282,6 +268,8 @@ namespace WindowsGSM1
                 Vector2 statusSize = new Vector2(status.Width, status.Height);
                 ScreenManager.SpriteBatch.Draw(status, center - statusSize / 2, Color.White);
             }
+
+			spriteBatch.End();
         }
 
         private void DrawShadowedString(SpriteFont font, string value, Vector2 position, Color color)

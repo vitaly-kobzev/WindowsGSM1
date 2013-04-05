@@ -171,7 +171,8 @@ namespace WindowsGSM1.Gameplay
         /// </remarks>
         protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
         {
-            GetInput(keyboardState);
+			if(IsAlive)
+				GetInput(keyboardState);
 
             ShotBuffer += gameTime.ElapsedGameTime.Milliseconds;
             ThrowBuffer += gameTime.ElapsedGameTime.Milliseconds;
@@ -279,7 +280,7 @@ namespace WindowsGSM1.Gameplay
         /// <summary>
         /// Updates the player's velocity and position based on input, gravity, etc.
         /// </summary>
-        public void ApplyPhysics(GameTime gameTime)
+        private void ApplyPhysics(GameTime gameTime)
         {
             float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 

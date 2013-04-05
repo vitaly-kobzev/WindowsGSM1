@@ -18,7 +18,7 @@ namespace WindowsGSM1.Gameplay
         /// <value>The position.</value>
         Vector2 Position { get; set; }
 
-        Rectangle TitleSafeArea { get; }
+        Vector2 TitleSafeArea { get; }
 
         /// <summary>
         /// Gets or sets the move speed of the camera.
@@ -76,17 +76,16 @@ namespace WindowsGSM1.Gameplay
 		/// </returns>
 		bool IsInView(GameObject gameObject);
 
+	    Matrix GetViewMatrix(Vector2 parallax);
+
 		event EventHandler<Camera2D.CameraEventArgs> CameraMoved;
+
     }
 
     public class Camera2D : GameComponent, ICamera2D
     {
         private Vector2 _position;
-
-        private int _boundaryBottom;
-        private int _boundaryRight;
-        private int _boundaryLeft;
-        private Rectangle _titleSafeArea;
+		private Vector2 _titleSafeArea;
 
         private Engine _engine;
 
@@ -100,9 +99,7 @@ namespace WindowsGSM1.Gameplay
 
             _engine = engine;
 
-            _titleSafeArea = new Rectangle();
-            _titleSafeArea.Width = 300;
-            _titleSafeArea.Height = 200;
+            _titleSafeArea = new Vector2();
         }
 
         #region Properties
@@ -118,7 +115,7 @@ namespace WindowsGSM1.Gameplay
         public Vector2 ScreenCenter { get; protected set; }
         public Matrix Transform { get; set; }
         public IFocusable Focus { get; set; }
-        public Rectangle TitleSafeArea { get { return _titleSafeArea; } }
+		public Vector2 TitleSafeArea { get { return _titleSafeArea; } }
         public float MoveSpeed { get; set; }
 
         #endregion
@@ -135,10 +132,19 @@ namespace WindowsGSM1.Gameplay
             Scale = 1;
             MoveSpeed = 1.25f;
 
-            _boundaryBottom = (int)_viewportHeight - 400;
-            _boundaryLeft = 0;
             base.Initialize();
         }
+
+		public Matrix GetViewMatrix(Vector2 parallax)
+		{
+			// To add parallax, simply multiply it by the position
+			return Matrix.CreateTranslation(new Vector3(-Position * parallax, 0.0f)) *
+				// The next line has a catch. See note below.
+				   Matrix.CreateTranslation(new Vector3(-Origin, 0.0f)) *
+				   Matrix.CreateRotationZ(Rotation) *
+				   Matrix.CreateScale(Scale, Scale, 1) *
+				   Matrix.CreateTranslation(new Vector3(Origin, 0.0f));
+		}
 
         public override void Update(GameTime gameTime)
         {
@@ -156,31 +162,26 @@ namespace WindowsGSM1.Gameplay
             // Move the Camera to the position that it needs to go
             var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
+	        Vector2 beforeUpdate = _position;
+
 			var dx = (Focus.Position.X - Position.X) * MoveSpeed * delta;
 			var dy = (Focus.Position.Y - Position.Y) * MoveSpeed * delta;
 
 	        _position.X += dx;
 	        _position.Y += dy;
 
-            _titleSafeArea.X = (int)(_position.X - ScreenCenter.X+10);
-            _titleSafeArea.Y = (int)(_position.Y - ScreenCenter.Y+10);
+	        float belowGround = _position.Y + _viewportHeight/2f - _engine.Level.GroundLevel;
 
-			if(dx!=0 || dy!=0)
-				OnCameraMoved(new CameraEventArgs{Delta = new Vector2(dx,dy)});
+			if(belowGround > 0)
+				_position.Y -= belowGround; 
+
+            _titleSafeArea.X = _position.X - ScreenCenter.X+10;
+            _titleSafeArea.Y = _position.Y - ScreenCenter.Y+10;
+
+			if(_position-beforeUpdate!=Vector2.Zero)
+				OnCameraMoved(new CameraEventArgs { Delta = _position - beforeUpdate });
 
             base.Update(gameTime);
-        }
-
-        private void ApplyBoundaries()
-        {
-            _boundaryRight = _engine.Level.Width * 32;
-
-            if (_position.Y > _boundaryBottom)
-                _position.Y = _boundaryBottom;
-            if (_position.X > _boundaryRight)
-                _position.X = _boundaryRight;
-            else if (_position.X < _boundaryLeft)
-                _position.X = _boundaryLeft;
         }
 
 	    public event EventHandler<CameraEventArgs> CameraMoved;

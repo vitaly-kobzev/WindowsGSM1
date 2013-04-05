@@ -164,7 +164,7 @@ namespace WindowsGSM1.Gameplay
             if (!Player.IsAlive)
             {
                 // Still want to perform physics on the player.
-                Player.ApplyPhysics(gameTime);
+                Player.Update(gameTime,keyboardState);
             }
             else
             {

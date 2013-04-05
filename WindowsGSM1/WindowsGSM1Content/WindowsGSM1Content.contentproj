@@ -166,6 +166,21 @@
       <Name>2</Name>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <Compile Include="Postprocessing\Shaders\BloomCombine.fx">
+      <Name>BloomCombine</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Compile>
+    <Compile Include="Postprocessing\Shaders\BloomExtract.fx">
+      <Name>BloomExtract</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Compile>
+    <Compile Include="Postprocessing\Shaders\GaussianBlur.fx">
+      <Name>GaussianBlur</Name>
+      <Importer>EffectImporter</Importer>
+      <Processor>EffectProcessor</Processor>
+    </Compile>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Overlays\you_died.png">
@@ -318,6 +333,13 @@
   <ItemGroup>
     <Compile Include="Sprites\Tilebomb.png">
       <Name>Tilebomb</Name>
+      <Importer>TextureImporter</Importer>
+      <Processor>TextureProcessor</Processor>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="Backgrounds\sunset.jpg">
+      <Name>sunset</Name>
       <Importer>TextureImporter</Importer>
       <Processor>TextureProcessor</Processor>
     </Compile>
