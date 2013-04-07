@@ -66,13 +66,13 @@ namespace WindowsGSM1.Gameplay
         {
 			if (collisions.HitImpassable)
 			{
-				_engine.ExplosionMaster.AddExplosion(Explosion,gameTime);
+				//_engine.ExplosionMaster.AddExplosion(Explosion,gameTime);
 				Kill();
 
 				if (collisions.CollidedObject != null) //if what we hit isn't just a tile or screen border
 				{
 					//TODO USE ROTATION
-					collisions.CollidedObject.OnHit(new HitData{Direction = 1,HitPosition = Position,HitTime = gameTime});
+					collisions.CollidedObject.OnHit(new HitData{Rotation = Rotation,HitPosition = Position,HitTime = gameTime, Damage = 1});
 				}
 			}
         }

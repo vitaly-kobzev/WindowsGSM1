@@ -47,10 +47,11 @@ Content\Sounds\PlayerFall.xnb
 Content\Sounds\PlayerJump.xnb
 Content\Sounds\PlayerKilled.xnb
 Content\Sounds\Powerup.xnb
+Content\Backgrounds\sunset.xnb
 Content\Postprocessing\Shaders\BloomCombine.xnb
 Content\Postprocessing\Shaders\BloomExtract.xnb
 Content\Postprocessing\Shaders\GaussianBlur.xnb
-Content\Backgrounds\sunset.xnb
+Content\Sprites\tile_debris.xnb
 Content\Sounds\MonsterKilled.wma
 Content\Sounds\Music.wma
 Content\Sounds\Powerup.wma

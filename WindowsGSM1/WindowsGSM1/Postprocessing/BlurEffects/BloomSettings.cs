@@ -69,5 +69,31 @@
             new BloomSettings("Blurry",      0,      2,   1,     0.1f, 1,       1),
             new BloomSettings("Subtle",      0.5f,   2,   1,     1,    1,       1),
         };
+
+	    public static BloomSettings Default
+	    {
+	        get { return PresetSettings[0]; }
+	    }
+        public static BloomSettings Soft
+        {
+            get { return PresetSettings[1]; }
+        }
+        public static BloomSettings Desaturated
+        {
+            get { return PresetSettings[2]; }
+        }
+        public static BloomSettings Saturated
+        {
+            get { return PresetSettings[3]; }
+        }
+
+	    public static BloomSettings Blurry
+	    {
+	        get { return PresetSettings[4]; }
+	    }
+        public static BloomSettings Subtle
+        {
+            get { return PresetSettings[5]; }
+        }
 	}
 }

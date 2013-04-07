@@ -77,6 +77,8 @@ namespace WindowsGSM1.Gameplay
             Content = new ContentManager(serviceProvider, "Content");
 
 			ExplosionMaster = explosionMaster;
+
+            HUDString = "HUD";
         }
 
 		public void Initialize(Stream fileStream, ICamera2D camera)
@@ -175,8 +177,7 @@ namespace WindowsGSM1.Gameplay
                     OnPlayerKilled();
 
                 // The player has reached the exit if they are standing on the ground and
-                // his bounding rectangle contains the center of the exit tile. They can only
-                // exit when they have collected all of the gems.
+                // his bounding rectangle contains the center of the exit tile.
                 if (Player.IsAlive &&
                     Player.IsOnGround &&
 					Player.BoundingRectangle.Contains(Level.ExitPosition))
@@ -285,5 +286,12 @@ namespace WindowsGSM1.Gameplay
 		{
 			_crosshair.Draw(gameTime, spriteBatch);
 		}
+
+        public void PushToHUD(string str)
+        {
+            HUDString = str;
+        }
+
+        public string HUDString { get; private set; }
     }
 }

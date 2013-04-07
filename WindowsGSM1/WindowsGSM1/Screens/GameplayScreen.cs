@@ -245,7 +245,7 @@ namespace WindowsGSM1
             Vector2 hudLocation = _camera.TitleSafeArea;
 	        Vector2 center = _camera.Position;
 
-			string hudString = string.Format("HUD");
+	        string hudString = _gameEngine.HUDString;
 
 			spriteBatch.Begin(SpriteSortMode.BackToFront, null, null, null, null, null, _camera.Transform);
 

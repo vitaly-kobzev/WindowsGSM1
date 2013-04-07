@@ -173,17 +173,17 @@ namespace WindowsGSM1.Gameplay
                 case 'X':
 					return LoadExitTile(x,y);
 
-                // Floating platform
+                // Ground
                 case '-':
-					return LoadTile("Platform", position, TileCollision.Platform);
+					return LoadTile("Platform", position, TileCollision.Impassable);
 
                 // Player 1 start point
                 case '1':
                     return LoadStartTile(x, y);
 
-                // Impassable block
+                // Killable tile
                 case '#':
-					return LoadTile("BlockA6", position, TileCollision.Impassable);
+					return LoadKillableTile("BlockA6", position, TileCollision.Impassable);
 
                 // Unknown tile type character
                 default:
@@ -191,9 +191,14 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
+        private Tile LoadKillableTile(string name, Vector2 position, TileCollision collision)
+        {
+            return new DestructableTile(3,_content.Load<Texture2D>("Tiles/" + name), position, collision, _engine);
+        }
+
         private Tile LoadTile(string name,Vector2 position, TileCollision collision)
         {
-            return new Tile(_content.Load<Texture2D>("Tiles/" + name), position, collision, _engine);
+            return new GroundTile(_content.Load<Texture2D>("Tiles/" + name), position, collision, _engine);
         }
 
 
@@ -217,7 +222,7 @@ namespace WindowsGSM1.Gameplay
         {
             StartLocation = RectangleExtensions.GetBottomCenter(GetBounds(x, y));
 
-            return new Tile(null,new Vector2(x, y)*Tile.Size, TileCollision.Passable, _engine);
+            return new GroundTile(null, new Vector2(x, y) * Tile.Size, TileCollision.Passable, _engine);
         }
         #endregion
 

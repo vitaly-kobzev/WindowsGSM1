@@ -19,7 +19,7 @@ namespace WindowsGSM1.Postprocessing
 		public void Initialize(Game game)
 		{
 			Bloom = new BloomComponent(game);
-			Bloom.Settings = BloomSettings.PresetSettings[0];
+		    Bloom.Settings = BloomSettings.Default;
 
 			if(PostProcessingEnabled)
 				game.Components.Add(Bloom);
