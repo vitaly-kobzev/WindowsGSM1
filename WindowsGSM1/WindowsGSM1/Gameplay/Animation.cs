@@ -21,6 +21,9 @@ namespace WindowsGSM1.Gameplay
     /// </remarks>
     class Animation
     {
+	    private int _frameHeight;
+	    private int _frameWidth;
+
         /// <summary>
         /// All frames in the animation arranged horizontally.
         /// </summary>
@@ -63,7 +66,7 @@ namespace WindowsGSM1.Gameplay
         public int FrameWidth
         {
             // Assume square frames.
-            get { return Texture.Height; }
+            get { return _frameWidth; }
         }
 
         /// <summary>
@@ -71,17 +74,24 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         public int FrameHeight
         {
-            get { return Texture.Height; }
+            get { return _frameHeight; }
         }
 
-        /// <summary>
-        /// Constructors a new animation.
-        /// </summary>        
-        public Animation(Texture2D texture, float frameTime, bool isLooping)
-        {
-            this.texture = texture;
-            this.frameTime = frameTime;
-            this.isLooping = isLooping;
-        }
+	    /// <summary>
+	    /// Constructors a new animation.
+	    /// </summary>        
+	    public Animation(Texture2D texture, float frameTime, bool isLooping)
+			: this(texture, texture.Height, texture.Height, frameTime, isLooping)
+	    {
+	    }
+
+	    public Animation(Texture2D texture, int frameHeight, int frameWidth, float frameTime, bool isLooping)
+		{
+			this.texture = texture;
+			this.frameTime = frameTime;
+			this.isLooping = isLooping;
+		    _frameHeight = frameHeight;
+		    _frameWidth = frameWidth;
+		}
     }
 }

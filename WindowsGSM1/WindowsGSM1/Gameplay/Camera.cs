@@ -76,8 +76,6 @@ namespace WindowsGSM1.Gameplay
 		/// </returns>
 		bool IsInView(GameObject gameObject);
 
-	    Matrix GetViewMatrix(Vector2 parallax);
-
 		event EventHandler<Camera2D.CameraEventArgs> CameraMoved;
 
     }
@@ -134,17 +132,6 @@ namespace WindowsGSM1.Gameplay
 
             base.Initialize();
         }
-
-		public Matrix GetViewMatrix(Vector2 parallax)
-		{
-			// To add parallax, simply multiply it by the position
-			return Matrix.CreateTranslation(new Vector3(-Position * parallax, 0.0f)) *
-				// The next line has a catch. See note below.
-				   Matrix.CreateTranslation(new Vector3(-Origin, 0.0f)) *
-				   Matrix.CreateRotationZ(Rotation) *
-				   Matrix.CreateScale(Scale, Scale, 1) *
-				   Matrix.CreateTranslation(new Vector3(Origin, 0.0f));
-		}
 
         public override void Update(GameTime gameTime)
         {
@@ -209,7 +196,7 @@ namespace WindowsGSM1.Gameplay
 
 		    var texture = gameObject.Texture;
 
-		    if (texture != null) //dont kill the tiles
+		    if (texture != null) //dont account the tiles
 		    {
 
 			    if ((position.X + texture.Width) < (Position.X - Origin.X) || (position.X) > (Position.X + Origin.X))

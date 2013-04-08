@@ -23,11 +23,8 @@ namespace WindowsGSM1.Gameplay
     public class Player : MovableGameObject, IFocusable
     {
         // Animations
-        private Animation idleAnimation;
-        private Animation runAnimation;
-        private Animation jumpAnimation;
-        private Animation celebrateAnimation;
-        private Animation dieAnimation;
+		private Animation _idleAnimation;
+
         private SpriteEffects flip = SpriteEffects.None;
         private AnimationPlayer sprite;
 
@@ -57,12 +54,6 @@ namespace WindowsGSM1.Gameplay
         private const float MaxFallSpeed = 550.0f;
         private const float JumpControlPower = 0.14f;
 
-        private const int ShotDelay = 150;
-        private const int ThrowDelay = 900;
-
-        private int ShotBuffer;
-        private int ThrowBuffer;
-
         /// <summary>
         /// Gets whether or not the player's feet are on the ground.
         /// </summary>
@@ -78,15 +69,19 @@ namespace WindowsGSM1.Gameplay
         private bool wasJumping;
         private float jumpTime;
 
-        private bool isFiring;
-        private int direction = 1;
-        private bool isThrowing;
-
 	    private Texture2D _blank;
 
 	    private Vector2 _crosshairPos;
 
+		//gun data
+		private const int ShotDelay = 150;
+
+		private int ShotBuffer;
+
+		private bool isFiring;
 	    private double _gunRotation;
+		//if gun is facing forward on backward
+	    private int direction = 1;
 
         /// <summary>
         /// Constructors a new player.
@@ -108,17 +103,13 @@ namespace WindowsGSM1.Gameplay
         public override void Initialize(ContentManager contentManager)
         {
             // Load animated textures.
-            idleAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Idle_armed2"), 0.2f, true);
-            runAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/RunTestgun"), 0.1f, true);
-            jumpAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Jump"), 0.1f, false);
-            celebrateAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Celebrate"), 0.1f, false);
-            dieAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Die"), 0.1f, false);
+	        _idleAnimation = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Soldier"),32,24,0.2f,true);
 
             // Calculate bounds within texture size.            
-            int width = (int)(idleAnimation.FrameWidth * 0.4);
-            int left = (idleAnimation.FrameWidth - width) / 2;
-            int height = (int)(idleAnimation.FrameHeight * 0.8);
-            int top = idleAnimation.FrameHeight - height;
+			int width = (int)(_idleAnimation.FrameWidth);
+			int left = (_idleAnimation.FrameWidth - width);
+			int height = (int)(_idleAnimation.FrameHeight);
+			int top = _idleAnimation.FrameHeight - height;
             _localBounds = new Rectangle(left, top, width, height);
 
             // Load sounds.            
@@ -126,7 +117,7 @@ namespace WindowsGSM1.Gameplay
             jumpSound = contentManager.Load<SoundEffect>("Sounds/PlayerJump");
             fallSound = contentManager.Load<SoundEffect>("Sounds/PlayerFall");
 
-			sprite.PlayAnimation(idleAnimation);
+			sprite.PlayAnimation(_idleAnimation);
 
 			_blank = new Texture2D(_engine.GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
 			_blank.SetData(new[] { Color.White });
@@ -175,31 +166,12 @@ namespace WindowsGSM1.Gameplay
 				GetInput(keyboardState);
 
             ShotBuffer += gameTime.ElapsedGameTime.Milliseconds;
-            ThrowBuffer += gameTime.ElapsedGameTime.Milliseconds;
 
             if (isFiring && ShotBuffer > ShotDelay)
             {
                 CreateBullet(GunPoint,
 					_gunRotation, gameTime);
                 ShotBuffer = 0;
-            }
-            else
-            {
-                if (isThrowing)
-                {
-                    if (TileBomb != null && ThrowBuffer > ThrowDelay / 5 )
-                    {
-                        TileBomb.Detonate();
-                        TileBomb = null;
-                    }
-                    else if (ThrowBuffer > ThrowDelay)
-                    {
-                        TileBomb = CreateTilebomb(
-                            new Vector2 {X = Position.X + direction*10, Y = Position.Y - sprite.Animation.FrameHeight},
-                            direction);
-                        ThrowBuffer = 0;
-                    }
-                }
             }
            
             ApplyPhysics(gameTime);
@@ -225,11 +197,12 @@ namespace WindowsGSM1.Gameplay
             {
                 if (Math.Abs(velocity.X) - 0.02f > 0)
                 {
-                    sprite.PlayAnimation(runAnimation);
+					//TODO run
+					sprite.PlayAnimation(_idleAnimation);
                 }
                 else
                 {
-                    sprite.PlayAnimation(idleAnimation);
+					sprite.PlayAnimation(_idleAnimation);
                 }
             }
 
@@ -237,7 +210,6 @@ namespace WindowsGSM1.Gameplay
             movement = 0.0f;
             isJumping = false;
             isFiring = false;
-            isThrowing = false;
         }
 
         protected TileBomb TileBomb { get; set; }
@@ -258,17 +230,13 @@ namespace WindowsGSM1.Gameplay
                 keyboardState.IsKeyDown(Keys.A))
             {
                 movement = -1.0f;
-                direction = (int)movement;
             }
             else if (keyboardState.IsKeyDown(Keys.Right) ||
                      keyboardState.IsKeyDown(Keys.D))
             {
                 movement = 1.0f;
-                direction = (int)movement;
             }
             isFiring = keyboardState.IsKeyDown(Keys.LeftControl);
-
-            isThrowing = keyboardState.IsKeyDown(Keys.X);
 
             // Check if the player wants to jump.
             isJumping =
@@ -336,7 +304,8 @@ namespace WindowsGSM1.Gameplay
                         jumpSound.Play();
 
                     jumpTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    sprite.PlayAnimation(jumpAnimation);
+					//TODO jump
+					sprite.PlayAnimation(_idleAnimation);
                 }
 
                 // If we are in the ascent of the jump
@@ -377,7 +346,7 @@ namespace WindowsGSM1.Gameplay
             else
                 fallSound.Play();
 
-            sprite.PlayAnimation(dieAnimation);
+            //sprite.PlayAnimation(dieAnimation);
         }
 
         /// <summary>
@@ -385,7 +354,7 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         public void OnReachedExit()
         {
-            sprite.PlayAnimation(celebrateAnimation);
+            //sprite.PlayAnimation(celebrateAnimation);
         }
 
         /// <summary>
@@ -396,9 +365,9 @@ namespace WindowsGSM1.Gameplay
 			DrawLine(spriteBatch,_blank,3,Color.Red,GunPoint,_crosshairPos);
 
             // Flip the sprite to face the way we are moving.
-            if (velocity.X > 0)
+            if (velocity.X < 0)
                 flip = SpriteEffects.FlipHorizontally;
-            else if (velocity.X < 0)
+            else if (velocity.X > 0)
                 flip = SpriteEffects.None;
 
             // Draw that sprite.
