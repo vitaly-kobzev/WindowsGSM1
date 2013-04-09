@@ -152,7 +152,7 @@ namespace WindowsGSM1.Gameplay
             return velocityY;
         }
 
-        protected override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        protected override void DrawInternal(GameTime gameTime, SpriteBatch spriteBatch)
         {
             // Calculate the source rectangle of the current frame.
             var origin = new Vector2(12,12);

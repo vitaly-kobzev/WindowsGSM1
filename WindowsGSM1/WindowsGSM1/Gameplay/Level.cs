@@ -222,7 +222,7 @@ namespace WindowsGSM1.Gameplay
         {
             StartLocation = RectangleExtensions.GetBottomCenter(GetBounds(x, y));
 
-            return new GroundTile(null, new Vector2(x, y) * Tile.Size, TileCollision.Passable, _engine);
+			return LoadTile("Exit", new Vector2(x, y) * Tile.Size, TileCollision.Passable);
         }
         #endregion
 

@@ -120,7 +120,7 @@ namespace WindowsGSM1.Gameplay
 			_newObjects.Add(obj);
 	    }
 
-		public void SubscribeToCrosshairEvents(EventHandler<CrosshairArgs> handler)
+		public void AddSubscriberToCrosshairEvents(EventHandler<CrosshairArgs> handler)
 		{
 			_crosshair.CrosshairMoved += handler;
 		}
@@ -271,7 +271,7 @@ namespace WindowsGSM1.Gameplay
         {
             foreach (var obj in _gameObjects)
             {
-				obj.Draw(gameTime, spriteBatch, _debugMode);
+				obj.Draw(gameTime, spriteBatch);
             }
         }
 
@@ -293,5 +293,10 @@ namespace WindowsGSM1.Gameplay
         }
 
         public string HUDString { get; private set; }
+
+		public bool IsInDebugMode
+		{
+			get { return _debugMode; }
+		}
     }
 }

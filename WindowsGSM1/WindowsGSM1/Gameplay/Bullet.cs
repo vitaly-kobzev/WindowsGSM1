@@ -91,7 +91,7 @@ namespace WindowsGSM1.Gameplay
             Position = new Vector2(Position.X, Position.Y);
         }
 
-        protected override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+        protected override void DrawInternal(GameTime gameTime, SpriteBatch spriteBatch)
         {
             // Draw the current frame.
             spriteBatch.Draw(_texture, Position, null, Color.White, 0.0f, Origin, 1.0f, SpriteEffects.None, 1);

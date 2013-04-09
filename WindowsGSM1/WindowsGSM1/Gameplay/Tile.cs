@@ -72,7 +72,7 @@ namespace WindowsGSM1.Gameplay
 	    {
 	    }
 
-	    protected override void Draw(GameTime gameTime, SpriteBatch spriteBatch)
+	    protected override void DrawInternal(GameTime gameTime, SpriteBatch spriteBatch)
 	    {
 			if(_texture!=null)
 				spriteBatch.Draw(_texture, Position, Color.White);

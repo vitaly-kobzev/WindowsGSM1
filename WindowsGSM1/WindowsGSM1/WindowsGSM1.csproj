@@ -86,6 +86,7 @@
     <Compile Include="Gameplay\Particles.cs" />
     <Compile Include="Gameplay\Player.cs" />
     <Compile Include="Gameplay\RectangleExtensions.cs" />
+    <Compile Include="Gameplay\SegmentedAnimationPlayer.cs" />
     <Compile Include="Gameplay\TileBomb.cs" />
     <Compile Include="Managers\BaseManager.cs" />
     <Compile Include="Managers\Implementation\SettingsManager.cs" />

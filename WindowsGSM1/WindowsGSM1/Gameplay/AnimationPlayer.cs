@@ -16,7 +16,7 @@ namespace WindowsGSM1.Gameplay
     /// <summary>
     /// Controls playback of an Animation.
     /// </summary>
-    struct AnimationPlayer
+    internal class AnimationPlayer
     {
         /// <summary>
         /// Gets the animation which is currently playing.
@@ -46,8 +46,11 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         public Vector2 Origin
         {
-            get { return new Vector2(Animation.FrameWidth / 2.0f, Animation.FrameHeight); }
+			get { return _origin ?? new Vector2(Animation.FrameWidth/2.0f, Animation.FrameHeight); }
+			set { _origin = value; }
         }
+
+	    private Vector2? _origin;
 
         /// <summary>
         /// Begins or continues playback of an animation.
@@ -64,10 +67,16 @@ namespace WindowsGSM1.Gameplay
             this.time = 0.0f;
         }
 
+		public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Vector2 position,
+		                 SpriteEffects spriteEffects, float depth)
+		{
+			Draw(gameTime, spriteBatch, position, 0.0f, spriteEffects, depth);
+		}
+
         /// <summary>
         /// Advances the time position and draws the current frame of the animation.
         /// </summary>
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Vector2 position, SpriteEffects spriteEffects)
+        public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Vector2 position, float rotation, SpriteEffects spriteEffects, float depth)
         {
             if (Animation == null)
                 throw new NotSupportedException("No animation is currently playing.");
@@ -90,10 +99,10 @@ namespace WindowsGSM1.Gameplay
             }
 
             // Calculate the source rectangle of the current frame.
-            Rectangle source = new Rectangle(FrameIndex * Animation.Texture.Height, 0, Animation.Texture.Height, Animation.Texture.Height);
+            Rectangle source = new Rectangle(FrameIndex * Animation.Texture.Height, 0, Animation.FrameWidth, Animation.Texture.Height);
 
             // Draw the current frame.
-            spriteBatch.Draw(Animation.Texture, position, source, Color.White, 0.0f, Origin, 1.0f, spriteEffects, 0.0f);
+			spriteBatch.Draw(Animation.Texture, position, source, Color.White, rotation,Origin, 1.0f, spriteEffects, depth);
         }
     }
 }

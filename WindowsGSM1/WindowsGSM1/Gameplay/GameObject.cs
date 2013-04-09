@@ -14,7 +14,9 @@ namespace WindowsGSM1.Gameplay
 	/// all objects in the game should be descendants of this
 	/// </summary>
     public abstract class GameObject
-    {
+	{
+		private Texture2D _debugTex;
+
         protected Engine _engine;
 
         protected Texture2D _texture;
@@ -40,25 +42,26 @@ namespace WindowsGSM1.Gameplay
         protected GameObject(Engine engine)
         {
             _engine = engine;
+	        if (_engine.IsInDebugMode)
+	        {
+		        _debugTex = new Texture2D(_engine.GraphicsDevice, 1, 1);
+		        _debugTex.SetData(new[] {Color.Red});
+	        }
         }
 
         public abstract void Initialize(ContentManager contentManager);
 
         public abstract void Update(GameTime gameTime, KeyboardState keyboardState);
 
-        protected abstract void Draw(GameTime gameTime, SpriteBatch spriteBatch);
+        protected abstract void DrawInternal(GameTime gameTime, SpriteBatch spriteBatch);
 
-        public void Draw(GameTime gameTime, SpriteBatch spriteBatch, bool debugMode)
+        public void Draw(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            if (debugMode)
+			if (_engine.IsInDebugMode)
             {
-                var rectTex = new Texture2D(_engine.GraphicsDevice, 1, 1);
-                rectTex.SetData(new[] { Color.Red });
-
-                spriteBatch.Draw(rectTex, BoundingRectangle, Color.Red);
+                spriteBatch.Draw(_debugTex, BoundingRectangle, Color.Red);
             }
-
-            Draw(gameTime, spriteBatch);
+			DrawInternal(gameTime, spriteBatch);
         }
 
 		private bool _isDead;

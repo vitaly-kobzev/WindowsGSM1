@@ -53,6 +53,8 @@ Content\Postprocessing\Shaders\GaussianBlur.xnb
 Content\Backgrounds\sunset.xnb
 Content\Sprites\tile_debris.xnb
 Content\Sprites\Player\Soldier.xnb
+Content\Sprites\Player\Soldier_lower.xnb
+Content\Sprites\Player\Soldier_upper.xnb
 Content\Sounds\MonsterKilled.wma
 Content\Sounds\Music.wma
 Content\Sounds\Powerup.wma

@@ -85,7 +85,7 @@ namespace WindowsGSM1.Gameplay
 	    {
 	    }
 
-	    public Animation(Texture2D texture, int frameHeight, int frameWidth, float frameTime, bool isLooping)
+		public Animation(Texture2D texture, int frameWidth, int frameHeight, float frameTime, bool isLooping)
 		{
 			this.texture = texture;
 			this.frameTime = frameTime;
