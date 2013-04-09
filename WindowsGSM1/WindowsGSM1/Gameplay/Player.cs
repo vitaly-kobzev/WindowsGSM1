@@ -14,6 +14,7 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using Microsoft.Xna.Framework.Input.Touch;
+using WindowsGSM1.Extensions;
 
 namespace WindowsGSM1.Gameplay
 {
@@ -58,6 +59,10 @@ namespace WindowsGSM1.Gameplay
         private const float MaxFallSpeed = 550.0f;
         private const float JumpControlPower = 0.14f;
 
+
+        private const float MinAngle = -0.8f;
+        private const float MaxAngle = 0.5f;
+
         /// <summary>
         /// Gets whether or not the player's feet are on the ground.
         /// </summary>
@@ -84,9 +89,12 @@ namespace WindowsGSM1.Gameplay
 
 		private bool isFiring;
 	    private double _gunRotation;
-	    private double _previousRotation;
 		//if gun is facing forward on backward
 	    private int direction = 1;
+
+        private Vector2 _defGP;
+        private Vector2 _OriginP;
+
 
         /// <summary>
         /// Constructors a new player.
@@ -113,8 +121,8 @@ namespace WindowsGSM1.Gameplay
 	        _lowerIdle = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Soldier_lower"),24,32,0.2f,true);
 			_upperIdle = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Soldier_upper"), 24, 12, 0.2f, true);
 
-	        Vector2 origin = new Vector2(6,6);
-			_animationPlayer.SetNamedPlayer(UpperBody, new AnimationData {Offset = new Vector2(-6, -20 - 6)}, new AnimationPlayer { Origin = origin });
+	        Vector2 origin = new Vector2(_upperIdle.FrameWidth/4f,_upperIdle.FrameHeight/2f);
+            _animationPlayer.SetNamedPlayer(UpperBody, new AnimationData { Offset = new Vector2(-_upperIdle.FrameWidth / 4f, -26) }, new AnimationPlayer { Origin = origin });
 
             // Calculate bounds within texture size.            
 			int width = (int)(24);
@@ -142,24 +150,43 @@ namespace WindowsGSM1.Gameplay
 	    {
 		    _crosshairPos = crosshairArgs.Data.Position;
 
-		    _previousRotation = _gunRotation;
+			var rotation = Math.Atan2(_crosshairPos.Y - GunPoint.Y, _crosshairPos.X - GunPoint.X) * direction;
 
-			_gunRotation = Math.Atan2(_crosshairPos.Y - GunPoint.Y, _crosshairPos.X - GunPoint.X);
+            _engine.PushToHUD(rotation.ToString());
 
-			_animationPlayer.UpdateRotation(UpperBody, _gunRotation);
+	        if (direction < 0)
+	            rotation -= MathHelper.Pi;
 
-		    float cos = (float) Math.Cos(_gunRotation);
+	        if (rotation > MaxAngle)
+	            rotation = MaxAngle;
+	        if (rotation < MinAngle)
+	            rotation = MinAngle;
 
-		    float sin = (float) Math.Sin(_gunRotation);
+	        _gunRotation = rotation;
 
-			_engine.PushToHUD(string.Format("cos {0} sin {1}",cos,sin));
+            _OriginP = Position + new Vector2(_animationPlayer.GetData(UpperBody).Offset.X * direction, _animationPlayer.GetData(UpperBody).Offset.Y);
 
-			Vector2 defaultGunPoint = new Vector2(Position.X-6, Position.Y - _animationPlayer.GetPlayer(LowerBody).Animation.FrameHeight - _animationPlayer.GetPlayer(UpperBody).Animation.FrameHeight);
+	        var origin = _animationPlayer.GetPlayer(UpperBody).Origin;
+	        if (direction < 0)
+	        {
+	            _animationPlayer.GetPlayer(UpperBody).Origin = new Vector2(_upperIdle.FrameWidth - _upperIdle.FrameWidth/4f, _upperIdle.FrameHeight/2f);
+	        }
+	        else
+	        {
+	            _animationPlayer.GetPlayer(UpperBody).Origin = new Vector2(_upperIdle.FrameWidth/4f,
+	                                                                       _upperIdle.FrameHeight/2f);
+	        }
 
-		    var rotCorrected = Vector2.Transform(defaultGunPoint, Matrix.CreateRotationZ((float) ((float) _gunRotation-_previousRotation)));
+	        _animationPlayer.UpdateRotation(UpperBody, _gunRotation);
 
-			GunPoint = rotCorrected; // 
+            _defGP = new Vector2(Position.X + direction*_animationPlayer.GetPlayer(LowerBody).Animation.FrameWidth / 2f, Position.Y - _animationPlayer.GetPlayer(LowerBody).Animation.FrameHeight + 3);
+
+            //_defGP = Vector2Util.RotateAboutOrigin(_defGP, _OriginP, (float)_gunRotation);
+
+            GunPoint = _defGP; // 
 	    }
+
+
 
 		private void DrawLine(SpriteBatch batch, Texture2D blank,
 			  float width, Color color, Vector2 point1, Vector2 point2)
@@ -392,7 +419,9 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         protected override void  DrawInternal(GameTime gameTime, SpriteBatch spriteBatch)
         {
+
 			DrawLine(spriteBatch,_blank,3,Color.Red,GunPoint,_crosshairPos);
+            DrawLine(spriteBatch, _blank, 3, Color.Green, _OriginP, _crosshairPos);
 
             // Flip the sprite to face the way we are moving.
             if (velocity.X < 0)
@@ -409,7 +438,7 @@ namespace WindowsGSM1.Gameplay
 		    OnKilled(null);
 	    }
 
-	    public override void OnHit(HitData hitData)
+	    public override void OnGotHit(HitData hitData)
 	    {
 		    Kill();
 	    }

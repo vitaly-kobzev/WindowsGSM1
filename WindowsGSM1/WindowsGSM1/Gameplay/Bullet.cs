@@ -36,7 +36,7 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
-        public override void OnHit(HitData hitData)
+        public override void OnGotHit(HitData hitData)
         {
 	        Kill();
         }
@@ -72,7 +72,7 @@ namespace WindowsGSM1.Gameplay
 				if (collisions.CollidedObject != null) //if what we hit isn't just a tile or screen border
 				{
 					//TODO USE ROTATION
-					collisions.CollidedObject.OnHit(new HitData{Rotation = Rotation,HitPosition = Position,HitTime = gameTime, Damage = 1});
+					collisions.CollidedObject.OnGotHit(new HitData{Rotation = Rotation,HitPosition = Position,HitTime = gameTime, Damage = 1});
 				}
 			}
         }

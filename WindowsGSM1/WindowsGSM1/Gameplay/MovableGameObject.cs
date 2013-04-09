@@ -89,7 +89,7 @@ namespace WindowsGSM1.Gameplay
 					if (collision != TileCollision.Passable)
 					{
 						// Determine collision depth (with direction) and magnitude.
-						Rectangle tileBounds = _engine.Level.GetBounds(x, y);
+						 Rectangle tileBounds = _engine.Level.GetBounds(x, y);
 						Vector2 depth = bounds.GetIntersectionDepth(tileBounds);
 						if (depth != Vector2.Zero)
 						{

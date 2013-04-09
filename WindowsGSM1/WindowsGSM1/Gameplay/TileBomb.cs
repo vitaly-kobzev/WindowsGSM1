@@ -57,7 +57,7 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
-        public override void OnHit(HitData hitData)
+        public override void OnGotHit(HitData hitData)
         {
             //var tile = new Tile(GeneratedTile, TileCollision.Impassable, _engine.Content.Load<Texture2D>("Sprites/wallhit"));
 

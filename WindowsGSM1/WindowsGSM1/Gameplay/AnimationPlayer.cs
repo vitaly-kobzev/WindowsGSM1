@@ -102,7 +102,7 @@ namespace WindowsGSM1.Gameplay
             Rectangle source = new Rectangle(FrameIndex * Animation.Texture.Height, 0, Animation.FrameWidth, Animation.Texture.Height);
 
             // Draw the current frame.
-			spriteBatch.Draw(Animation.Texture, position, source, Color.White, rotation,Origin, 1.0f, spriteEffects, depth);
+			spriteBatch.Draw(Animation.Texture, position, source, Color.White, rotation,Origin, 1f, spriteEffects, depth);
         }
     }
 }

@@ -78,7 +78,7 @@ namespace WindowsGSM1.Gameplay
 				spriteBatch.Draw(_texture, Position, Color.White);
 	    }
 
-	    public override void OnHit(HitData hitData)
+	    public override void OnGotHit(HitData hitData)
 	    {
 	        const int distributionAngle = 45;
 	        float hitAngle = MathHelper.ToDegrees((float) hitData.Rotation) + 180;
@@ -116,10 +116,10 @@ namespace WindowsGSM1.Gameplay
             _life = life;
         }
 
-        public override void OnHit(HitData hitData)
+        public override void OnGotHit(HitData hitData)
         {
             //animate hit
-            base.OnHit(hitData);
+            base.OnGotHit(hitData);
 
             ReceiveDamage(hitData);
         }

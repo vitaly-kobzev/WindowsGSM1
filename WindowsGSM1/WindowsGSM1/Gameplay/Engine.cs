@@ -185,6 +185,9 @@ namespace WindowsGSM1.Gameplay
                     OnExitReached();
                 }
             }
+
+            //if (gameTime.TotalGameTime.TotalSeconds > 3 && gameTime.TotalGameTime.TotalSeconds < 4 && !_movableObjects.Any(o=>o is Enemy))
+            //   AddGameObject(new Enemy(this,new Vector2(1000,500)));
         }
 
 		private void UpdateCrosshair(GameTime gameTime, MouseState mouseState)

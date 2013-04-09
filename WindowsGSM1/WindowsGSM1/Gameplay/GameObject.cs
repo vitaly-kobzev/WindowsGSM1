@@ -77,7 +77,7 @@ namespace WindowsGSM1.Gameplay
 			}
 		}
 
-		public void Kill()
+		public virtual void Kill()
 		{
 			IsDead = true;
 		}
@@ -88,6 +88,6 @@ namespace WindowsGSM1.Gameplay
 		}
 
 		public abstract void OnDead();
-		public abstract void OnHit(HitData hitData);
+		public abstract void OnGotHit(HitData hitData);
     }
 }

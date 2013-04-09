@@ -53,6 +53,11 @@ namespace WindowsGSM1.Gameplay
 			return _players[name];
 		}
 
+        public AnimationData GetData(string name)
+        {
+            return _data[name];
+        }
+
 		public void Draw(GameTime gameTime, SpriteBatch spriteBatch, Vector2 position,SpriteEffects spriteEffects)
 		{
 			foreach (var animationPlayer in _players)

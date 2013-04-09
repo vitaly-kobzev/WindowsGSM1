@@ -66,6 +66,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="Exceptions\GameSettingsException.cs" />
+    <Compile Include="Extensions\Vector2Ex.cs" />
     <Compile Include="Factories\Implementation\ManagerFactory.cs" />
     <Compile Include="Factories\Interfaces\IManagerFactory.cs" />
     <Compile Include="Game.cs" />
