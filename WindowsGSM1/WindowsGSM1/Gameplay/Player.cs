@@ -21,7 +21,7 @@ namespace WindowsGSM1.Gameplay
     /// <summary>
     /// Our fearless adventurer!
     /// </summary>
-    public class Player : MovableGameObject, IFocusable
+    public class Player : CollidableGameObject, IFocusable
     {
         // Animations
 	    private const string LowerBody = "low";
@@ -130,7 +130,7 @@ namespace WindowsGSM1.Gameplay
 			int height = (int)(32); //TODO hardcode
 			int top = 0;
 
-            _localBounds = new Rectangle(left, top, width, height);
+			LocalBounds = new Rectangle(left, top, width, height);
 
             // Load sounds.            
             killedSound = contentManager.Load<SoundEffect>("Sounds/PlayerKilled");
@@ -141,7 +141,7 @@ namespace WindowsGSM1.Gameplay
 			_animationPlayer.PlayAnimation(UpperBody, _upperIdle);
 
 			_blank = new Texture2D(_engine.GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
-			_blank.SetData(new[] { Color.White });
+			_blank.SetData(new[] { Color.White });	
 
 			_engine.AddSubscriberToCrosshairEvents(HandleCrosshairEvents);
         }
@@ -179,7 +179,7 @@ namespace WindowsGSM1.Gameplay
 
 	        _animationPlayer.UpdateRotation(UpperBody, _gunRotation);
 
-            _defGP = new Vector2(Position.X + direction*_animationPlayer.GetPlayer(LowerBody).Animation.FrameWidth / 2f, Position.Y - _animationPlayer.GetPlayer(LowerBody).Animation.FrameHeight + 3);
+            _defGP = new Vector2(Position.X + direction*_animationPlayer.GetPlayer(LowerBody).Animation.FrameWidth / 1.5f, Position.Y - _animationPlayer.GetPlayer(LowerBody).Animation.FrameHeight + 3);
 
             //_defGP = Vector2Util.RotateAboutOrigin(_defGP, _OriginP, (float)_gunRotation);
 

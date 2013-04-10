@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Input;
 
 namespace WindowsGSM1.Gameplay
 {
-    public class TileBomb : MovableGameObject
+    public class TileBomb : CollidableGameObject
     {
 
         public string Source { get; private set; }
@@ -90,16 +90,16 @@ namespace WindowsGSM1.Gameplay
 
         public override void Initialize(ContentManager content)
         {
-            _texture = content.Load<Texture2D>("Sprites/Tilebomb");
+            Texture = content.Load<Texture2D>("Sprites/Tilebomb");
             GeneratedTile = content.Load<Texture2D>("Tiles/BlockB1");
             HitTexture = content.Load<Texture2D>("Sprites/explosion");
 
-			int width = (int)(_texture.Width * 0.4);
-			int left = (_texture.Width - width) / 2;
-			int height = (int)(_texture.Height * 0.8);
-			int top = _texture.Height - height;
+			int width = (int)(Texture.Width * 0.4);
+			int left = (Texture.Width - width) / 2;
+			int height = (int)(Texture.Height * 0.8);
+			int top = Texture.Height - height;
 
-			_localBounds = new Rectangle(left, top, width, height);
+			LocalBounds = new Rectangle(left, top, width, height);
         }
 
         protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
@@ -160,7 +160,7 @@ namespace WindowsGSM1.Gameplay
             rotation += 0.02f * gameTime.ElapsedGameTime.Milliseconds;
 
             // Draw the current frame.
-            spriteBatch.Draw(_texture, Position, null, Color.White, rotation, origin, 1.0f, SpriteEffects.None, 1);
+            spriteBatch.Draw(Texture, Position, null, Color.White, rotation, origin, 1.0f, SpriteEffects.None, 1);
         }
 
 	    public override void OnDead()

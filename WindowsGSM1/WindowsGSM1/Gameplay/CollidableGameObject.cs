@@ -9,17 +9,54 @@ using Microsoft.Xna.Framework.Input;
 
 namespace WindowsGSM1.Gameplay
 {
+	public enum CollisionCheckType
+	{
+		Rectangle,
+		PerPixel
+	}
+
+
     /// <summary>
     /// descendant of GameObject with physics support
     /// </summary>
-    public abstract class MovableGameObject : GameObject
+    public abstract class CollidableGameObject : GameObject
     {
         private Vector2 _positionBeforeUpdate;
 
         private Rectangle _previousBounds;
 
-        protected MovableGameObject(Engine engine) : base(engine)
+	    private Color[] _textureData;
+
+		public override Texture2D Texture
+		{
+			get
+			{
+				return base.Texture;
+			}
+			set
+			{
+				_textureData = new Color[value.Height*value.Width];
+				value.GetData(_textureData);
+
+				base.Texture = value;
+			}
+		}
+
+		public readonly CollisionCheckType CollCheckLevel;
+
+		public Color[] GetTextureData()
+		{
+			return _textureData;
+		}
+
+        protected CollidableGameObject(Engine engine) : this(CollisionCheckType.Rectangle,engine)
         {}
+
+		protected CollidableGameObject(CollisionCheckType collisionCheck,Engine engine)
+			: base(engine)
+		{
+			CollCheckLevel = collisionCheck;
+		}
 
         protected abstract void UpdateInternal(GameTime gameTime, KeyboardState keyboardState);
 
@@ -44,24 +81,41 @@ namespace WindowsGSM1.Gameplay
 
 	        CheckTileCollisions(ref result);
 
+			//if we are clear of tiles, check game objects - performance consuming
 			if(!result.HitImpassable)
-				CheckMovableCollisions(ref result);
+				CheckObjectCollisions(ref result);
 
             return result;
         }
 
-	    private void CheckMovableCollisions(ref CollisionCheckResult result)
+	    private void CheckObjectCollisions(ref CollisionCheckResult result)
 	    {
 			Rectangle bounds = BoundingRectangle;
 
-		    foreach (var obj in _engine.GetMovables())
+		    foreach (var obj in _engine.GetCollidables())
 		    {
+				//dont collide with yourself,stupid
+				if(obj==this)
+					continue;
+
 			    Vector2 depth = bounds.GetIntersectionDepth(obj.BoundingRectangle);
 
 				if (depth != Vector2.Zero)
 				{
-					result.HitImpassable = true;
-					result.CollidedObject = obj;
+					//if both objects are using the fastest collision check type - this is enough
+					if (this.CollCheckLevel == CollisionCheckType.Rectangle && obj.CollCheckLevel == CollisionCheckType.Rectangle)
+					{
+						result.HitImpassable = true;
+						result.CollidedObject = obj;
+					}
+					else
+					{
+						if (Collider.DoPerPixelCollision(bounds, _textureData, obj.BoundingRectangle, obj.GetTextureData()))
+						{
+							result.HitImpassable = true;
+							result.CollidedObject = obj;
+						}
+					}
 				}
 		    }
 	    }

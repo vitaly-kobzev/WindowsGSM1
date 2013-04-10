@@ -19,9 +19,21 @@ namespace WindowsGSM1.Gameplay
 
         protected Engine _engine;
 
-        protected Texture2D _texture;
+        private Texture2D _texture;
 
-        protected Rectangle _localBounds;
+		public virtual Texture2D Texture
+		{
+			get { return _texture; }
+			set { _texture = value; }
+		}
+
+        private Rectangle? _localBounds;
+
+		public virtual Rectangle LocalBounds 
+		{
+			get { return _localBounds ?? new Rectangle(0,0,Texture.Width,Texture.Height); }
+			set { _localBounds = value; }
+		}
 
         protected virtual Vector2 Origin { get{return new Vector2(_texture.Width/2f,_texture.Height);} }
 
@@ -32,10 +44,10 @@ namespace WindowsGSM1.Gameplay
         {
             get
             {
-                int left = (int)Math.Round(Position.X - Origin.X) + _localBounds.X;
-                int top = (int)Math.Round(Position.Y - Origin.Y) + _localBounds.Y;
+				int left = (int)Math.Round(Position.X - Origin.X) + LocalBounds.X;
+				int top = (int)Math.Round(Position.Y - Origin.Y) + LocalBounds.Y;
 
-                return new Rectangle(left, top, _localBounds.Width, _localBounds.Height);
+				return new Rectangle(left, top, LocalBounds.Width, LocalBounds.Height);
             }
         }
 
@@ -80,11 +92,6 @@ namespace WindowsGSM1.Gameplay
 		public virtual void Kill()
 		{
 			IsDead = true;
-		}
-
-		public Texture2D Texture
-		{
-			get { return _texture; }
 		}
 
 		public abstract void OnDead();

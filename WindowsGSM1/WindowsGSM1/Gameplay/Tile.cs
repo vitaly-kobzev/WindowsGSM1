@@ -51,31 +51,35 @@ namespace WindowsGSM1.Gameplay
 
         private Texture2D _hitTexture;
 
+	    protected readonly string TextureName;
+
         public static readonly Vector2 Size = new Vector2(Width, Height);
 
         /// <summary>
         /// Constructs a new tile.
         /// </summary>
-		protected Tile(Texture2D texture, Vector2 position, TileCollision collision, Engine engine):base(engine)
+		protected Tile(string texture, Vector2 position, TileCollision collision, Engine engine):base(engine)
         {
-            _texture = texture;
+			TextureName = texture;
 	        Position = position;
             Collision = collision;
         }
 
+		public override void Update(GameTime gameTime, KeyboardState keyboardState)
+		{
+		}
+
 	    public override void Initialize(ContentManager contentManager)
 	    {
-	        _hitTexture = contentManager.Load<Texture2D>("Sprites/tile_debris");
-	    }
+		    Texture = contentManager.Load<Texture2D>(TextureName);
 
-	    public override void Update(GameTime gameTime, KeyboardState keyboardState)
-	    {
+	        _hitTexture = contentManager.Load<Texture2D>("Sprites/tile_debris");
 	    }
 
 	    protected override void DrawInternal(GameTime gameTime, SpriteBatch spriteBatch)
 	    {
-			if(_texture!=null)
-				spriteBatch.Draw(_texture, Position, Color.White);
+			if(Texture!=null)
+				spriteBatch.Draw(Texture, Position, Color.White);
 	    }
 
 	    public override void OnGotHit(HitData hitData)
@@ -98,7 +102,8 @@ namespace WindowsGSM1.Gameplay
 
     public class GroundTile : Tile
     {
-        public GroundTile(Texture2D texture, Vector2 position, TileCollision collision, Engine engine) : base(texture, position, collision, engine)
+		public GroundTile(string name, Vector2 position, TileCollision collision, Engine engine)
+			: base(name, position, collision, engine)
         {
         }
         public override void OnDead()
@@ -111,7 +116,8 @@ namespace WindowsGSM1.Gameplay
     {
         private int _life;
 
-        public DestructableTile(int life,Texture2D texture, Vector2 position, TileCollision collision, Engine engine) : base(texture, position, collision, engine)
+		public DestructableTile(int life, string name, Vector2 position, TileCollision collision, Engine engine)
+			: base(name, position, collision, engine)
         {
             _life = life;
         }

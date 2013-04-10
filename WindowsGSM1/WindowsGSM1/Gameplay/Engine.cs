@@ -41,7 +41,7 @@ namespace WindowsGSM1.Gameplay
         private List<GameObject> _gameObjects = new List<GameObject>();
 		
 		//optimisation for collision checks
-		private List<GameObject> _movableObjects = new List<GameObject>(); 
+		private List<GameObject> _collidableObjects = new List<GameObject>(); 
 
 		private readonly List<GameObject> _newObjects = new List<GameObject>();
 
@@ -89,7 +89,7 @@ namespace WindowsGSM1.Gameplay
 
 			InitCrosshair();
 
-			AddGameObjects(Level.LoadTiles(fileStream));
+			AddGameObjects(Level.LoadLevel(fileStream));
 
 			// Load sounds.
 			exitReachedSound = Content.Load<SoundEffect>("Sounds/ExitReached");
@@ -108,12 +108,20 @@ namespace WindowsGSM1.Gameplay
 		public Engine(IServiceProvider serviceProvider, IExplosionMaster explosionMaster):this(serviceProvider,explosionMaster,false)
 		{}
 
+		/// <summary>
+		/// initializes objects and adds them to the game field
+		/// </summary>
+		/// <param name="objects"></param>
 		public void AddGameObjects(GameObject[] objects)
 		{
 			Array.ForEach(objects, o => o.Initialize(Content));
 			_newObjects.AddRange(objects);
 		}
 
+		/// <summary>
+		/// initializes objects and adds it to the game field
+		/// </summary>
+		/// <param name="obj"></param>
 		public void AddGameObject(GameObject obj)
 	    {
 			obj.Initialize(Content);
@@ -204,7 +212,7 @@ namespace WindowsGSM1.Gameplay
 		{
 			//manage new objects
 			_gameObjects.AddRange(_newObjects);
-			_movableObjects.AddRange(_newObjects.Where(o=>o is MovableGameObject).ToArray());
+			_collidableObjects.AddRange(_newObjects.Where(o=>o is CollidableGameObject).ToArray());
 			_newObjects.Clear();
 
 			var deadObjects = new List<GameObject>();
@@ -219,16 +227,16 @@ namespace WindowsGSM1.Gameplay
 				}
 			}
 			_gameObjects = _gameObjects.Except(deadObjects).ToList();
-			_movableObjects = _movableObjects.Except(deadObjects).ToList();
+			_collidableObjects = _collidableObjects.Except(deadObjects).ToList();
 
 			KillInvisibleObjects();
 	    }
 
 		private void KillInvisibleObjects()
 		{
-			foreach (var gameObject in _movableObjects)
+			foreach (var gameObject in _collidableObjects)
 			{
-				if(!Camera.IsInView(gameObject) && gameObject != Player)
+				if(gameObject is Bullet && !Camera.IsInView(gameObject))
 					gameObject.Kill();
 			}
 		}
@@ -280,9 +288,9 @@ namespace WindowsGSM1.Gameplay
 
         #endregion
 
-		public IEnumerable<MovableGameObject> GetMovables()
+		public IEnumerable<CollidableGameObject> GetCollidables()
 		{
-			return _movableObjects.Cast<MovableGameObject>();
+			return _collidableObjects.Cast<CollidableGameObject>();
 		}
 
 		public void DrawCrosshair(GameTime gameTime, SpriteBatch spriteBatch)

@@ -19,7 +19,7 @@ namespace WindowsGSM1.Gameplay
     /// <summary>
     /// A monster who is impeding the progress of our fearless adventurer.
     /// </summary>
-    public class Enemy : MovableGameObject
+    public class Enemy : CollidableGameObject
     {
         private const float GravityAcceleration = 3400.0f;
         private const float MaxFallSpeed = 550.0f;
@@ -32,13 +32,12 @@ namespace WindowsGSM1.Gameplay
         public override void Initialize(ContentManager contentManager)
         {
             //_texture = contentManager.Load<Texture2D>("Sprites/Guy/monetm");
+			LocalBounds = new Rectangle(0, 0, Texture.Width, Texture.Height);
         }
 
         protected override void DrawInternal(GameTime gameTime, SpriteBatch spriteBatch)
         {
-            spriteBatch.Draw(_texture, Position, null, Color.White, 0.0f, Origin,10, SpriteEffects.None, 1);
-
-            _localBounds = new Rectangle(0,0,Texture.Width,Texture.Height);
+            spriteBatch.Draw(Texture, Position, null, Color.White, 0.0f, Origin,10, SpriteEffects.None, 1);
         }
 
         /// <summary>

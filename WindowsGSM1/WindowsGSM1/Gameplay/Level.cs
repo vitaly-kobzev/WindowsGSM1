@@ -99,7 +99,7 @@ namespace WindowsGSM1.Gameplay
         /// <param name="fileStream">
         /// A stream containing the tile data.
         /// </param>
-        public GameObject[] LoadTiles(Stream fileStream)
+        public GameObject[] LoadLevel(Stream fileStream)
         {
 			var loadedObjects = new List<GameObject>();
 
@@ -128,12 +128,13 @@ namespace WindowsGSM1.Gameplay
                 for (int x = 0; x < Width; ++x)
                 {
                     // to load each tile.
-                    char tileType = lines[y][x];
-                    var tile = LoadTile(tileType, x, y);
-	                _tiles[x, y] = tile;
+                    char objType = lines[y][x];
+                    var obj = LoadObject(objType, x, y);
+					if(obj is Tile)
+						_tiles[x, y] = (Tile)obj;
 
-					if(tile!=null)
-						loadedObjects.Add(tile);
+					if (obj != null)
+						loadedObjects.Add(obj);
                 }
             }
 
@@ -160,7 +161,7 @@ namespace WindowsGSM1.Gameplay
         /// The Y location of this tile in tile space.
         /// </param>
         /// <returns>The loaded tile.</returns>
-        private Tile LoadTile(char tileType, int x, int y)
+        private GameObject LoadObject(char tileType, int x, int y)
         {
 	        var position = new Vector2(x, y)*Tile.Size;
             switch (tileType)
@@ -185,20 +186,29 @@ namespace WindowsGSM1.Gameplay
                 case '#':
 					return LoadKillableTile("BlockA6", position, TileCollision.Impassable);
 
+				// Killable tile
+				case 'Y':
+					return LoadKillableObject("Exit", position, CollisionCheckType.PerPixel);
+
                 // Unknown tile type character
                 default:
                     throw new NotSupportedException(String.Format("Unsupported tile type character '{0}' at position {1}, {2}.", tileType, x, y));
             }
         }
 
-        private Tile LoadKillableTile(string name, Vector2 position, TileCollision collision)
+	    private DestructableObject LoadKillableObject(string name, Vector2 position, CollisionCheckType perPixel)
+	    {
+			return new DestructableObject("Tiles/" + name, position, perPixel, _engine);
+	    }
+
+	    private Tile LoadKillableTile(string name, Vector2 position, TileCollision collision)
         {
-            return new DestructableTile(3,_content.Load<Texture2D>("Tiles/" + name), position, collision, _engine);
+            return new DestructableTile(3,"Tiles/" + name, position, collision, _engine);
         }
 
         private Tile LoadTile(string name,Vector2 position, TileCollision collision)
         {
-            return new GroundTile(_content.Load<Texture2D>("Tiles/" + name), position, collision, _engine);
+            return new GroundTile("Tiles/" + name, position, collision, _engine);
         }
 
 

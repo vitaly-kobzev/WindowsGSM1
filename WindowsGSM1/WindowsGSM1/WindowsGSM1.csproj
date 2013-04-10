@@ -75,11 +75,13 @@
     <Compile Include="Gameplay\Bullet.cs" />
     <Compile Include="Gameplay\Camera.cs" />
     <Compile Include="Gameplay\Circle.cs" />
+    <Compile Include="Gameplay\Collider.cs" />
     <Compile Include="Gameplay\Crosshair.cs" />
+    <Compile Include="Gameplay\DestructableObject.cs" />
     <Compile Include="Gameplay\Enemy.cs" />
     <Compile Include="Gameplay\ExplosionData.cs" />
     <Compile Include="Gameplay\HitData.cs" />
-    <Compile Include="Gameplay\MovableGameObject.cs" />
+    <Compile Include="Gameplay\CollidableGameObject.cs" />
     <Compile Include="Gameplay\Gem.cs" />
     <Compile Include="Gameplay\Engine.cs" />
     <Compile Include="Gameplay\Level.cs" />

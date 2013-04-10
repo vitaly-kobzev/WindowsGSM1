@@ -10,7 +10,7 @@ using Microsoft.Xna.Framework.Input;
 namespace WindowsGSM1.Gameplay
 {
 
-    public class Bullet : MovableGameObject
+    public class Bullet : CollidableGameObject
     {
         public string Source { get; private set; }
 
@@ -43,7 +43,7 @@ namespace WindowsGSM1.Gameplay
 
         public Texture2D HitTexture { get; set; }
 
-        public Bullet(Engine engine, Vector2 startingPos, double rotation, string source) : base(engine)
+        public Bullet(Engine engine, Vector2 startingPos, double rotation, string source) : base(CollisionCheckType.PerPixel,engine)
         {
 			Rotation = rotation;
             Position = startingPos;
@@ -54,7 +54,7 @@ namespace WindowsGSM1.Gameplay
 
         public override void Initialize(ContentManager content)
         {
-            _texture = content.Load<Texture2D>("Sprites/Bullet");
+            Texture = content.Load<Texture2D>("Sprites/Bullet");
         }
 
         protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
@@ -94,7 +94,7 @@ namespace WindowsGSM1.Gameplay
         protected override void DrawInternal(GameTime gameTime, SpriteBatch spriteBatch)
         {
             // Draw the current frame.
-            spriteBatch.Draw(_texture, Position, null, Color.White, 0.0f, Origin, 1.0f, SpriteEffects.None, 1);
+            spriteBatch.Draw(Texture, Position, null, Color.White, 0.0f, Origin, 1.0f, SpriteEffects.None, 1);
         }
 
 	    public override void OnDead()
