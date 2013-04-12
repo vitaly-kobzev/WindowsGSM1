@@ -43,7 +43,7 @@ namespace WindowsGSM1.Gameplay
 
         public Texture2D HitTexture { get; set; }
 
-        public Bullet(Engine engine, Vector2 startingPos, double rotation, string source) : base(CollisionCheckType.PerPixel,engine)
+        public Bullet(Engine engine, Vector2 startingPos, double rotation, string source) : base(CollisionCheckType.Rectangle,engine)
         {
 			Rotation = rotation;
             Position = startingPos;

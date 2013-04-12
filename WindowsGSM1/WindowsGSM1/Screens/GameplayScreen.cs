@@ -257,7 +257,7 @@ namespace WindowsGSM1
 
             // Determine the status overlay message to show.
             Texture2D status = null;
-            if (!_gameEngine.Player.IsAlive)
+            if (_gameEngine.Player.IsDead)
             {
                 status = diedOverlay;
             }

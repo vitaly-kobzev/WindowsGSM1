@@ -11,9 +11,7 @@ namespace WindowsGSM1.Gameplay
 {
     public class Level
     {
-        private ContentManager _content;
-
-	    private Engine _engine;
+	    private readonly Engine _engine;
 
 		public Vector2 StartLocation { get; private set; }
 
@@ -27,10 +25,8 @@ namespace WindowsGSM1.Gameplay
 
         private static readonly Point InvalidPosition = new Point(-1, -1);
 
-        public Level(ContentManager content, Engine engine)
+        public Level(Engine engine)
         {
-            _content = content;
-
 	        _engine = engine;
 
 	        ExitPosition = InvalidPosition;
@@ -188,7 +184,7 @@ namespace WindowsGSM1.Gameplay
 
 				// Killable tile
 				case 'Y':
-					return LoadKillableObject("Exit", position, CollisionCheckType.PerPixel);
+					return LoadKillableObject("Exit", position, CollisionCheckType.Rectangle);
 
                 // Unknown tile type character
                 default:

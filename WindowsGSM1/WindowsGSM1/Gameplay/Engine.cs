@@ -31,7 +31,6 @@ namespace WindowsGSM1.Gameplay
 
         public GraphicsDevice GraphicsDevice { get; set; }
 
-        // Entities in the level.
 		public Player Player { get; private set; }
 
         public EventHandler<EventArgs> PlayerSpawned;
@@ -53,8 +52,6 @@ namespace WindowsGSM1.Gameplay
 
 		// Level content.        
 		public ContentManager Content { get; private set; }
-
-		private SoundEffect exitReachedSound;
 
 		private bool _debugMode;
 
@@ -85,18 +82,13 @@ namespace WindowsGSM1.Gameplay
 		{
 			Camera = camera;
 
-			Level = new Level(Content, this);
+			Level = new Level(this);
 
 			InitCrosshair();
 
 			AddGameObjects(Level.LoadLevel(fileStream));
 
-			// Load sounds.
-			exitReachedSound = Content.Load<SoundEffect>("Sounds/ExitReached");
-
-			SpawnPlayer();
-
-			AddGameObject(Player);
+			AddGameObject(Player = new Player(this, Level.StartLocation));
 		}
 
 		private void InitCrosshair()
@@ -138,17 +130,6 @@ namespace WindowsGSM1.Gameplay
 			_crosshair.CrosshairMoved -= handler;
 		}
 
-	    private void SpawnPlayer()
-        {
-			Player = new Player(this, Level.StartLocation);
-            FirePlayerSpawned();
-        }
-
-        private void FirePlayerSpawned()
-        {
-            if (PlayerSpawned != null)
-                PlayerSpawned(this,new EventArgs());
-        }
         
         /// <summary>
         /// Unloads the level content.
@@ -171,7 +152,7 @@ namespace WindowsGSM1.Gameplay
 	        UpdateCrosshair(gameTime, Mouse.GetState());
 
             // Pause while the player is dead or time is expired.
-            if (!Player.IsAlive)
+            if (Player.IsDead)
             {
                 // Still want to perform physics on the player.
                 Player.Update(gameTime,keyboardState);
@@ -186,7 +167,7 @@ namespace WindowsGSM1.Gameplay
 
                 // The player has reached the exit if they are standing on the ground and
                 // his bounding rectangle contains the center of the exit tile.
-                if (Player.IsAlive &&
+				if (!Player.IsDead &&
                     Player.IsOnGround &&
 					Player.BoundingRectangle.Contains(Level.ExitPosition))
                 {
@@ -259,7 +240,6 @@ namespace WindowsGSM1.Gameplay
         private void OnExitReached()
         {
             Player.OnReachedExit();
-            exitReachedSound.Play();
             ReachedExit = true;
         }
 

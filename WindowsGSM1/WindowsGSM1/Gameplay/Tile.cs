@@ -51,7 +51,7 @@ namespace WindowsGSM1.Gameplay
 
         private Texture2D _hitTexture;
 
-	    protected readonly string TextureName;
+	    protected readonly string Name;
 
         public static readonly Vector2 Size = new Vector2(Width, Height);
 
@@ -60,7 +60,7 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
 		protected Tile(string texture, Vector2 position, TileCollision collision, Engine engine):base(engine)
         {
-			TextureName = texture;
+			Name = texture;
 	        Position = position;
             Collision = collision;
         }
@@ -71,7 +71,7 @@ namespace WindowsGSM1.Gameplay
 
 	    public override void Initialize(ContentManager contentManager)
 	    {
-		    Texture = contentManager.Load<Texture2D>(TextureName);
+		    Texture = contentManager.Load<Texture2D>(Name);
 
 	        _hitTexture = contentManager.Load<Texture2D>("Sprites/tile_debris");
 	    }

@@ -23,45 +23,44 @@ namespace WindowsGSM1.Gameplay
     /// </summary>
     public class Player : CollidableGameObject, IFocusable
     {
-        // Animations
-	    private const string LowerBody = "low";
-		private const string UpperBody = "top";
+		#region Constants
+
+		// Constants for controling horizontal movement
+		private const float MoveAcceleration = 13000.0f;
+		private const float MaxMoveSpeed = 1750.0f;
+		private const float GroundDragFactor = 0.48f;
+		private const float AirDragFactor = 0.58f;
+
+		// Constants for controlling vertical movement
+		private const float MaxJumpTime = 0.35f;
+		private const float JumpLaunchVelocity = -3500.0f;
+		private const float GravityAcceleration = 3400.0f;
+		private const float MaxFallSpeed = 550.0f;
+		private const float JumpControlPower = 0.14f;
+		#endregion
+
+	    private Vector2 _originDirectionalPart;
+		private Vector2 _topOrigin;
+		private Vector2 _topOffset;
+
+		private Vector2 _gunPointDirectionalPart;
+		private Vector2 _stationaryGunPoint;
+
 
 		private Animation _lowerIdle;
 		private Animation _upperIdle;
 
         private SpriteEffects flip = SpriteEffects.None;
-        private SegmentedAnimationPlayer _animationPlayer;
+
+	    private AnimationPlayer _topAnimation;
+	    private AnimationPlayer _botAnimation;
 
         // Sounds
         private SoundEffect killedSound;
         private SoundEffect jumpSound;
         private SoundEffect fallSound;
 
-        public bool IsAlive
-        {
-            get { return isAlive; }
-        }
-        bool isAlive;
-
         Vector2 velocity;
-
-        // Constants for controling horizontal movement
-        private const float MoveAcceleration = 13000.0f;
-        private const float MaxMoveSpeed = 1750.0f;
-        private const float GroundDragFactor = 0.48f;
-        private const float AirDragFactor = 0.58f;
-
-        // Constants for controlling vertical movement
-        private const float MaxJumpTime = 0.35f;
-        private const float JumpLaunchVelocity = -3500.0f;
-        private const float GravityAcceleration = 3400.0f;
-        private const float MaxFallSpeed = 550.0f;
-        private const float JumpControlPower = 0.14f;
-
-
-        private const float MinAngle = -0.8f;
-        private const float MaxAngle = 0.5f;
 
         /// <summary>
         /// Gets whether or not the player's feet are on the ground.
@@ -89,14 +88,27 @@ namespace WindowsGSM1.Gameplay
 
 		private bool isFiring;
 	    private double _gunRotation;
-		//if gun is facing forward on backward
-	    private int direction = 1;
+		//if gun is facing forward on backward. Should be accessed using property!
+	    private int _gunDirection;
 
-        private Vector2 _defGP;
-        private Vector2 _OriginP;
+	    private int GunDirection
+	    {
+			get { return _gunDirection; }
+			set
+			{
+				if (_gunDirection == value)
+					return;
+
+				_gunDirection = value;
+
+				//recalculate directional parts
+				_originDirectionalPart = new Vector2(_topOffset.X * _gunDirection + (_gunDirection > 0 ? 0 : _upperIdle.FrameWidth / 2), _topOffset.Y);
+				_gunPointDirectionalPart = new Vector2(_gunDirection * _botAnimation.Animation.FrameWidth / 1.4f, -_botAnimation.Animation.FrameHeight + 3);
+			}
+	    }
 
 
-        /// <summary>
+	    /// <summary>
         /// Constructors a new player.
         /// </summary>
         public Player(Engine engine, Vector2 position) : base(engine)
@@ -107,7 +119,7 @@ namespace WindowsGSM1.Gameplay
 
         protected override Vector2 Origin
         {
-			get { return _animationPlayer.Origin; }
+			get { return _botAnimation.Origin; }
         }
 
         /// <summary>
@@ -115,14 +127,16 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         public override void Initialize(ContentManager contentManager)
         {
-			_animationPlayer = new SegmentedAnimationPlayer(LowerBody,new AnimationPlayer());
+			_topAnimation = new AnimationPlayer();
+			_botAnimation = new AnimationPlayer();
 
             // Load animated textures.
 	        _lowerIdle = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Soldier_lower"),24,32,0.2f,true);
 			_upperIdle = new Animation(contentManager.Load<Texture2D>("Sprites/Player/Soldier_upper"), 24, 12, 0.2f, true);
 
-	        Vector2 origin = new Vector2(_upperIdle.FrameWidth/4f,_upperIdle.FrameHeight/2f);
-            _animationPlayer.SetNamedPlayer(UpperBody, new AnimationData { Offset = new Vector2(-_upperIdle.FrameWidth / 4f, -26) }, new AnimationPlayer { Origin = origin });
+			_topOffset = new Vector2(-_upperIdle.FrameWidth / 4f, -26);
+
+	        _topAnimation.Origin = new Vector2(_upperIdle.FrameWidth/4f,_upperIdle.FrameHeight/2f);
 
             // Calculate bounds within texture size.            
 			int width = (int)(24);
@@ -137,8 +151,8 @@ namespace WindowsGSM1.Gameplay
             jumpSound = contentManager.Load<SoundEffect>("Sounds/PlayerJump");
             fallSound = contentManager.Load<SoundEffect>("Sounds/PlayerFall");
 
-			_animationPlayer.PlayAnimation(LowerBody, _lowerIdle);
-			_animationPlayer.PlayAnimation(UpperBody, _upperIdle);
+			_botAnimation.PlayAnimation(_lowerIdle);
+			_topAnimation.PlayAnimation(_upperIdle);
 
 			_blank = new Texture2D(_engine.GraphicsDevice, 1, 1, false, SurfaceFormat.Color);
 			_blank.SetData(new[] { Color.White });	
@@ -148,47 +162,42 @@ namespace WindowsGSM1.Gameplay
 
 	    private void HandleCrosshairEvents(object sender, CrosshairArgs crosshairArgs)
 	    {
+		    GunDirection = 1;
 		    _crosshairPos = crosshairArgs.Data.Position;
 
-			var rotation = Math.Atan2(_crosshairPos.Y - GunPoint.Y, _crosshairPos.X - GunPoint.X) * direction;
+			//get angle between player's gun and a crosshair
+			var rotation = (float) Math.Atan2(_crosshairPos.Y - GunPoint.Y, _crosshairPos.X - GunPoint.X);
 
-            _engine.PushToHUD(rotation.ToString());
+			//change players direction if necessary
+		    UpdateDirection(ref rotation);
 
-	        if (direction < 0)
-	            rotation -= MathHelper.Pi;
+			//wrap angle and apply boundaries
+		    rotation = MathHelper.WrapAngle(rotation);
+			rotation = MathHelper.Clamp(rotation, -MathHelper.Pi / 3, MathHelper.Pi / 4);
 
-	        if (rotation > MaxAngle)
-	            rotation = MaxAngle;
-	        if (rotation < MinAngle)
-	            rotation = MinAngle;
+			_gunRotation = rotation;
 
-	        _gunRotation = rotation;
+            _stationaryGunPoint = Vector2Util.RotateAboutOrigin(_stationaryGunPoint, _topOrigin, (float)_gunRotation);
 
-            _OriginP = Position + new Vector2(_animationPlayer.GetData(UpperBody).Offset.X * direction, _animationPlayer.GetData(UpperBody).Offset.Y);
+            GunPoint = _stationaryGunPoint;
+	    }
 
-	        var origin = _animationPlayer.GetPlayer(UpperBody).Origin;
-	        if (direction < 0)
-	        {
-	            _animationPlayer.GetPlayer(UpperBody).Origin = new Vector2(_upperIdle.FrameWidth - _upperIdle.FrameWidth/4f, _upperIdle.FrameHeight/2f);
-	        }
-	        else
-	        {
-	            _animationPlayer.GetPlayer(UpperBody).Origin = new Vector2(_upperIdle.FrameWidth/4f,
-	                                                                       _upperIdle.FrameHeight/2f);
-	        }
+	    private void UpdateDirection(ref float rotation)
+	    {
+		    if (Math.Abs(Math.Abs(rotation) - MathHelper.PiOver2) > 0.3)
+		    {
+			    if (rotation > -MathHelper.PiOver2 && rotation < MathHelper.PiOver2)
+					GunDirection = 1;
+			    else
+					GunDirection = -1;
+		    }
 
-	        _animationPlayer.UpdateRotation(UpperBody, _gunRotation);
-
-            _defGP = new Vector2(Position.X + direction*_animationPlayer.GetPlayer(LowerBody).Animation.FrameWidth / 1.5f, Position.Y - _animationPlayer.GetPlayer(LowerBody).Animation.FrameHeight + 3);
-
-            //_defGP = Vector2Util.RotateAboutOrigin(_defGP, _OriginP, (float)_gunRotation);
-
-            GunPoint = _defGP; // 
+			if (GunDirection < 0)
+			    rotation += MathHelper.Pi;
 	    }
 
 
-
-		private void DrawLine(SpriteBatch batch, Texture2D blank,
+	    private void DrawLine(SpriteBatch batch, Texture2D blank,
 			  float width, Color color, Vector2 point1, Vector2 point2)
 		{
 			float angle = (float)Math.Atan2(point2.Y - point1.Y, point2.X - point1.X);
@@ -207,7 +216,6 @@ namespace WindowsGSM1.Gameplay
         {
             Position = position;
             velocity = Vector2.Zero;
-            isAlive = true;
         }
 
         /// <summary>
@@ -220,15 +228,14 @@ namespace WindowsGSM1.Gameplay
         /// </remarks>
         protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
         {
-			if(IsAlive)
+			if(!IsDead)
 				GetInput(keyboardState);
 
             ShotBuffer += gameTime.ElapsedGameTime.Milliseconds;
 
             if (isFiring && ShotBuffer > ShotDelay)
             {
-                CreateBullet(GunPoint,
-					_gunRotation, gameTime);
+                CreateBullet(GunPoint,_gunRotation, gameTime);
                 ShotBuffer = 0;
             }
            
@@ -248,18 +255,18 @@ namespace WindowsGSM1.Gameplay
             if (Position.Y == collisions.PositionBeforeUpdate.Y)
                 velocity.Y = 0;
 
-            if (IsAlive && IsOnGround)
+            if (!IsDead && IsOnGround)
             {
                 if (Math.Abs(velocity.X) - 0.02f > 0)
                 {
 					//TODO run
-					_animationPlayer.PlayAnimation(LowerBody,_lowerIdle);
-					_animationPlayer.PlayAnimation(UpperBody, _upperIdle);
+					_botAnimation.PlayAnimation(_lowerIdle);
+					_topAnimation.PlayAnimation(_upperIdle);
                 }
                 else
                 {
-					_animationPlayer.PlayAnimation(LowerBody,_lowerIdle);
-					_animationPlayer.PlayAnimation(UpperBody, _upperIdle);
+					_botAnimation.PlayAnimation(_lowerIdle);
+					_topAnimation.PlayAnimation(_upperIdle);
                 }
             }
 
@@ -268,8 +275,6 @@ namespace WindowsGSM1.Gameplay
             isJumping = false;
             isFiring = false;
         }
-
-        protected TileBomb TileBomb { get; set; }
 
         /// <summary>
         /// Gets player horizontal movement and jump commands from input.
@@ -287,13 +292,13 @@ namespace WindowsGSM1.Gameplay
                 keyboardState.IsKeyDown(Keys.A))
             {
                 movement = -1.0f;
-	            direction = -1;
+	            //direction = -1;
             }
             else if (keyboardState.IsKeyDown(Keys.Right) ||
                      keyboardState.IsKeyDown(Keys.D))
             {
                 movement = 1.0f;
-	            direction = 1;
+
             }
             isFiring = keyboardState.IsKeyDown(Keys.LeftControl);
 
@@ -330,6 +335,10 @@ namespace WindowsGSM1.Gameplay
             // Apply velocity.
             Position += velocity * elapsed;
             Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
+
+			//recalculate nesessary points 
+			_topOrigin = Position + _originDirectionalPart;
+			_stationaryGunPoint = Position + _gunPointDirectionalPart;
         }
 
         /// <summary>
@@ -362,7 +371,6 @@ namespace WindowsGSM1.Gameplay
 
                     jumpTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
 					//TODO jump
-					_animationPlayer.PlayAnimation(LowerBody,_lowerIdle);
                 }
 
                 // If we are in the ascent of the jump
@@ -396,8 +404,6 @@ namespace WindowsGSM1.Gameplay
         /// </param>
         public void OnKilled(Enemy killedBy)
         {
-            isAlive = false;
-
             if (killedBy != null)
                 killedSound.Play();
             else
@@ -419,18 +425,31 @@ namespace WindowsGSM1.Gameplay
         /// </summary>
         protected override void  DrawInternal(GameTime gameTime, SpriteBatch spriteBatch)
         {
-
-			DrawLine(spriteBatch,_blank,3,Color.Red,GunPoint,_crosshairPos);
-            DrawLine(spriteBatch, _blank, 3, Color.Green, _OriginP, _crosshairPos);
-
             // Flip the sprite to face the way we are moving.
-            if (velocity.X < 0)
+			if (GunDirection < 0)
                 flip = SpriteEffects.FlipHorizontally;
-            else if (velocity.X > 0)
+			else if (GunDirection > 0)
                 flip = SpriteEffects.None;
 
             // Draw that sprite.
-            _animationPlayer.Draw(gameTime, spriteBatch, Position, flip);
+
+	        var topRotation = (float)_gunRotation;
+			if (GunDirection == 1)
+	        {
+		        _topAnimation.Origin = new Vector2(_upperIdle.FrameWidth/4f, _upperIdle.FrameHeight/2f);
+				_topOffset = new Vector2(-_upperIdle.FrameWidth / 4f, -26);
+	        }
+			else if (GunDirection == -1)
+	        {
+		        _topAnimation.Origin = new Vector2(_upperIdle.FrameWidth - _upperIdle.FrameWidth/4f, _upperIdle.FrameHeight/2f);
+				_topOffset = new Vector2(_upperIdle.FrameWidth / 4f, -26);
+	        }
+
+	        _topAnimation.Draw(gameTime, spriteBatch, Position + _topOffset, topRotation, flip, 0.1f);
+			_botAnimation.Draw(gameTime, spriteBatch, Position, 0, flip, 1f);
+
+			//DrawLine(spriteBatch, _blank, 3, Color.Red, GunPoint, _crosshairPos);
+			DrawLine(spriteBatch, _blank, 3, Color.Green, _topOrigin, _crosshairPos);
         }
 
 	    public override void OnDead()
@@ -451,7 +470,13 @@ namespace WindowsGSM1.Gameplay
 		public void CreateBullet(Vector2 startPos, double rotation, GameTime gameTime)
 		{
 			_engine.ExplosionMaster.AddExplosion(startPos, 4, 2f, 360, 100f, gameTime);
-			var bullet = new Bullet(_engine, startPos, rotation, "Player");
+
+			var bulletRotation = rotation;
+
+			if (GunDirection < 0)
+				bulletRotation -= MathHelper.Pi;
+
+			var bullet = new Bullet(_engine, startPos, bulletRotation, "Player");
 			_engine.AddGameObject(bullet);
 		}
 
