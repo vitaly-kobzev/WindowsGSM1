@@ -8,15 +8,16 @@
 #endregion
 
 #region Using Statements
+
 using System;
 using System.Collections.Generic;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Microsoft.Xna.Framework.Input.Touch;
-using Microsoft.Xna.Framework.Input;
+using WindowsGSM1.Manager;
+
 #endregion
 
-namespace WindowsGSM1
+namespace WindowsGSM1.Screens
 {
     /// <summary>
     /// Base class for screens that contain a menu of options. The user can

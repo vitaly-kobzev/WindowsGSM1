@@ -8,12 +8,14 @@
 #endregion
 
 #region Using Statements
+
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+
 #endregion
 
-namespace WindowsGSM1
+namespace WindowsGSM1.Screens
 {
     /// <summary>
     /// Helper class represents a single entry in a MenuScreen. By default this
@@ -157,7 +159,7 @@ namespace WindowsGSM1
             color *= screen.TransitionAlpha;
 
             // Draw text, centered on the middle of each line.
-            ScreenManager screenManager = screen.ScreenManager;
+			Manager.ScreenManager screenManager = screen.ScreenManager;
             SpriteBatch spriteBatch = screenManager.SpriteBatch;
             SpriteFont font = screenManager.Font;
 

@@ -8,12 +8,15 @@
 #endregion
 
 #region Using Statements
+
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using WindowsGSM1.Manager;
+
 #endregion
 
-namespace WindowsGSM1
+namespace WindowsGSM1.Screens
 {
     /// <summary>
     /// The loading screen coordinates transitions between the menu system and the
@@ -47,7 +50,7 @@ namespace WindowsGSM1
         /// The constructor is private: loading screens should
         /// be activated via the static Load method instead.
         /// </summary>
-        private LoadingScreen(ScreenManager screenManager, bool loadingIsSlow,
+		private LoadingScreen(Manager.ScreenManager screenManager, bool loadingIsSlow,
                               GameScreen[] screensToLoad)
         {
             this.loadingIsSlow = loadingIsSlow;
@@ -60,7 +63,7 @@ namespace WindowsGSM1
         /// <summary>
         /// Activates the loading screen.
         /// </summary>
-        public static void Load(ScreenManager screenManager, bool loadingIsSlow,
+		public static void Load(Manager.ScreenManager screenManager, bool loadingIsSlow,
                                 PlayerIndex? controllingPlayer,
                                 params GameScreen[] screensToLoad)
         {

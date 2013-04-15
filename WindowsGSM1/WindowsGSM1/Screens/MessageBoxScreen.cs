@@ -8,13 +8,16 @@
 #endregion
 
 #region Using Statements
+
 using System;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
+using WindowsGSM1.Manager;
+
 #endregion
 
-namespace WindowsGSM1
+namespace WindowsGSM1.Screens
 {
     /// <summary>
     /// A popup message box screen, used to display "are you sure?"

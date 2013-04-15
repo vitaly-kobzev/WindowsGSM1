@@ -8,12 +8,12 @@
 #endregion
 
 #region Using Statements
-using Microsoft.Xna.Framework;
+
 using WindowsGSM1.Screens.Options;
 
 #endregion
 
-namespace WindowsGSM1
+namespace WindowsGSM1.Screens
 {
     /// <summary>
     /// The options screen is brought up over the top of the main menu

@@ -8,10 +8,12 @@
 #endregion
 
 #region Using Statements
+
 using Microsoft.Xna.Framework;
+
 #endregion
 
-namespace WindowsGSM1
+namespace WindowsGSM1.Screens
 {
     /// <summary>
     /// The main menu screen is the first thing displayed when the game starts up.

@@ -8,20 +8,20 @@
 #endregion
 
 #region Using Statements
+
 using System;
 using System.IO;
-using System.Threading;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using Microsoft.Xna.Framework.Media;
-using WindowsGSM1.Gameplay;
+using WindowsGSM1.Gameplay.Mechanics;
+using WindowsGSM1.Manager;
 using WindowsGSM1.Postprocessing;
 
 #endregion
 
-namespace WindowsGSM1
+namespace WindowsGSM1.Screens
 {
     /// <summary>
     /// This screen implements the actual game logic. It is just a

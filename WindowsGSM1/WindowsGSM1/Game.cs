@@ -17,25 +17,20 @@ using WindowsGSM1.Factories.Interfaces;
 using WindowsGSM1.Managers;
 using WindowsGSM1.Managers.Implementation;
 using WindowsGSM1.Managers.Interfaces;
+using WindowsGSM1.Screens;
 using WindowsGSM1.Settings;
 
 #endregion
 
 namespace WindowsGSM1
 {
-    /// <summary>
-    /// Sample showing how to manage different game states, with transitions
-    /// between menu screens, a loading screen, the game itself, and a pause
-    /// menu. This main game class is extremely simple: all the interesting
-    /// stuff happens in the ScreenManager component.
-    /// </summary>
     public class GameStateManagementGame : Microsoft.Xna.Framework.Game
     {
         #region Fields
 
         private readonly IManagerFactory managerFactory;
 
-        private ScreenManager screenManager;
+        private Manager.ScreenManager screenManager;
 
         // By preloading any assets used by UI rendering, we avoid framerate glitches
         // when they suddenly need to be loaded in the middle of a menu transition.
@@ -56,7 +51,7 @@ namespace WindowsGSM1
             InitGraphicsDevice();
 
             // Create the screen manager component.
-            screenManager = new ScreenManager(this);
+			screenManager = new Manager.ScreenManager(this);
 
             Components.Add(screenManager);
 
