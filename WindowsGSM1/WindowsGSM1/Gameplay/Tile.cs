@@ -106,7 +106,7 @@ namespace WindowsGSM1.Gameplay
 			: base(name, position, collision, engine)
         {
         }
-        public override void OnDead()
+		protected override void OnDead()
         {
             //We are undestructable, weee!
         }
@@ -122,7 +122,7 @@ namespace WindowsGSM1.Gameplay
             _life = life;
         }
 
-        public override void OnGotHit(HitData hitData)
+	    public override void OnGotHit(HitData hitData)
         {
             //animate hit
             base.OnGotHit(hitData);
@@ -138,7 +138,7 @@ namespace WindowsGSM1.Gameplay
                 Kill();
         }
 
-        public override void OnDead()
+		protected override void OnDead()
         {
             var v = Position / Size;
             _engine.Level.RemoveTileAt((int)v.X, (int)v.Y);

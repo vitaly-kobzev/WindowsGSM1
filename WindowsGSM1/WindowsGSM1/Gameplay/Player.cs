@@ -55,11 +55,6 @@ namespace WindowsGSM1.Gameplay
 	    private AnimationPlayer _topAnimation;
 	    private AnimationPlayer _botAnimation;
 
-        // Sounds
-        private SoundEffect killedSound;
-        private SoundEffect jumpSound;
-        private SoundEffect fallSound;
-
         Vector2 velocity;
 
         /// <summary>
@@ -83,14 +78,12 @@ namespace WindowsGSM1.Gameplay
 
 		//gun data
 		private const int ShotDelay = 150;
-
 		private int ShotBuffer;
-
 		private bool isFiring;
 	    private double _gunRotation;
+
 		//if gun is facing forward on backward. Should be accessed using property!
 	    private int _gunDirection;
-
 	    private int GunDirection
 	    {
 			get { return _gunDirection; }
@@ -102,11 +95,19 @@ namespace WindowsGSM1.Gameplay
 				_gunDirection = value;
 
 				//recalculate directional parts
+				_topOffset = new Vector2(-1*value*_upperIdle.FrameWidth / 4f, -26);
 				_originDirectionalPart = new Vector2(_topOffset.X * _gunDirection + (_gunDirection > 0 ? 0 : _upperIdle.FrameWidth / 2), _topOffset.Y);
 				_gunPointDirectionalPart = new Vector2(_gunDirection * _botAnimation.Animation.FrameWidth / 1.4f, -_botAnimation.Animation.FrameHeight + 3);
 			}
 	    }
 
+	    public event EventHandler<EventArgs> PlayerDied;
+
+	    protected void FirePlayerDied()
+	    {
+		    EventHandler<EventArgs> handler = PlayerDied;
+		    if (handler != null) handler(this, EventArgs.Empty);
+	    }
 
 	    /// <summary>
         /// Constructors a new player.
@@ -146,11 +147,6 @@ namespace WindowsGSM1.Gameplay
 
 			LocalBounds = new Rectangle(left, top, width, height);
 
-            // Load sounds.            
-            killedSound = contentManager.Load<SoundEffect>("Sounds/PlayerKilled");
-            jumpSound = contentManager.Load<SoundEffect>("Sounds/PlayerJump");
-            fallSound = contentManager.Load<SoundEffect>("Sounds/PlayerFall");
-
 			_botAnimation.PlayAnimation(_lowerIdle);
 			_topAnimation.PlayAnimation(_upperIdle);
 
@@ -162,7 +158,6 @@ namespace WindowsGSM1.Gameplay
 
 	    private void HandleCrosshairEvents(object sender, CrosshairArgs crosshairArgs)
 	    {
-		    GunDirection = 1;
 		    _crosshairPos = crosshairArgs.Data.Position;
 
 			//get angle between player's gun and a crosshair
@@ -200,7 +195,7 @@ namespace WindowsGSM1.Gameplay
 	    private void DrawLine(SpriteBatch batch, Texture2D blank,
 			  float width, Color color, Vector2 point1, Vector2 point2)
 		{
-			float angle = (float)Math.Atan2(point2.Y - point1.Y, point2.X - point1.X);
+			var angle = (float)Math.Atan2(point2.Y - point1.Y, point2.X - point1.X);
 			float length = Vector2.Distance(point1, point2);
 
 			batch.Draw(blank, point1, null, color,
@@ -367,7 +362,7 @@ namespace WindowsGSM1.Gameplay
                 if ((!wasJumping && IsOnGround) || jumpTime > 0.0f)
                 {
                     if (jumpTime == 0.0f)
-                        jumpSound.Play();
+                        //jumpSound.Play();
 
                     jumpTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
 					//TODO jump
@@ -396,23 +391,6 @@ namespace WindowsGSM1.Gameplay
         }
 
         /// <summary>
-        /// Called when the player has been killed.
-        /// </summary>
-        /// <param name="killedBy">
-        /// The enemy who killed the player. This parameter is null if the player was
-        /// not killed by an enemy (fell into a hole).
-        /// </param>
-        public void OnKilled(Enemy killedBy)
-        {
-            if (killedBy != null)
-                killedSound.Play();
-            else
-                fallSound.Play();
-
-            //sprite.PlayAnimation(dieAnimation);
-        }
-
-        /// <summary>
         /// Called when this player reaches the level's exit.
         /// </summary>
         public void OnReachedExit()
@@ -435,15 +413,10 @@ namespace WindowsGSM1.Gameplay
 
 	        var topRotation = (float)_gunRotation;
 			if (GunDirection == 1)
-	        {
 		        _topAnimation.Origin = new Vector2(_upperIdle.FrameWidth/4f, _upperIdle.FrameHeight/2f);
-				_topOffset = new Vector2(-_upperIdle.FrameWidth / 4f, -26);
-	        }
 			else if (GunDirection == -1)
-	        {
 		        _topAnimation.Origin = new Vector2(_upperIdle.FrameWidth - _upperIdle.FrameWidth/4f, _upperIdle.FrameHeight/2f);
-				_topOffset = new Vector2(_upperIdle.FrameWidth / 4f, -26);
-	        }
+
 
 	        _topAnimation.Draw(gameTime, spriteBatch, Position + _topOffset, topRotation, flip, 0.1f);
 			_botAnimation.Draw(gameTime, spriteBatch, Position, 0, flip, 1f);
@@ -452,9 +425,10 @@ namespace WindowsGSM1.Gameplay
 			DrawLine(spriteBatch, _blank, 3, Color.Green, _topOrigin, _crosshairPos);
         }
 
-	    public override void OnDead()
+	    protected override void OnDead()
 	    {
-		    OnKilled(null);
+		    FirePlayerDied();
+			_engine.UnsubscribeToCrosshairEvents(HandleCrosshairEvents);
 	    }
 
 	    public override void OnGotHit(HitData hitData)

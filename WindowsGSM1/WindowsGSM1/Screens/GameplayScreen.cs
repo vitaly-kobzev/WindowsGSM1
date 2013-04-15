@@ -33,13 +33,8 @@ namespace WindowsGSM1
         #region Fields
 
         // Global content.
-        private SpriteFont hudFont;
-
         private ICamera2D _camera;
 
-        private Texture2D winOverlay;
-        private Texture2D loseOverlay;
-        private Texture2D diedOverlay;
 	    private Texture2D _background;
 
         private Engine _gameEngine;
@@ -48,7 +43,7 @@ namespace WindowsGSM1
 
         private ParticleEngine _particleEngine;
 
-        private bool wasContinuePressed;
+	    private HUD _hud;
 
         // When the time remaining is less than the warning time, it blinks on the hud
         private static readonly TimeSpan WarningTime = TimeSpan.FromSeconds(30);
@@ -87,33 +82,32 @@ namespace WindowsGSM1
         /// </summary>
         public override void LoadContent()
         {
-            if (content == null)
-                content = new ContentManager(ScreenManager.Game.Services, "Content");
+	        if (content == null)
+		        content = new ContentManager(ScreenManager.Game.Services, "Content");
 
-            // Load fonts
-            hudFont = content.Load<SpriteFont>("menufont");
-
-            // Load overlay textures
-            winOverlay = content.Load<Texture2D>("Overlays/you_win");
-            loseOverlay = content.Load<Texture2D>("Overlays/you_lose");
-            diedOverlay = content.Load<Texture2D>("Overlays/you_died");
 	        _background = content.Load<Texture2D>("Backgrounds/sunset");
 
             _particleEngine = new ParticleEngine(content);
 
+			_gameEngine = new Engine(ScreenManager.Game.Services, _particleEngine)
+				{
+					GraphicsDevice = ScreenManager.GraphicsDevice
+				};
+
+			_camera = new Camera2D(ScreenManager.Game, _gameEngine);
+
+	        _hud = new HUD(_camera);
 
             // Load the level.
             string levelPath = string.Format("Content/Levels/{0}.txt", 0);
             using (Stream fileStream = TitleContainer.OpenStream(levelPath))
             {
-                _gameEngine = new Engine(ScreenManager.Game.Services,_particleEngine);
-                _gameEngine.GraphicsDevice = ScreenManager.GraphicsDevice;
+				_gameEngine.Initialize(fileStream, _camera, _hud);
 
-				_camera = new Camera2D(ScreenManager.Game, _gameEngine);
+	            _camera.Focus = _gameEngine.Player;
 
-				_gameEngine.Initialize(fileStream, _camera);
+				_hud.Initialize(content);
 
-				_camera.Focus = _gameEngine.Player;
 				//todo: implement video setting for postprocessing
 				_postprocessor = new GraphicalPostprocessor(true);
 				_postprocessor.Initialize(ScreenManager.Game);
@@ -197,7 +191,7 @@ namespace WindowsGSM1
             base.Draw(gameTime);
 
 			//Hud should be drawn in the last place - it shouldn't be affected by postprocessing
-			DrawHud(spriteBatch);
+			_hud.Draw(spriteBatch);
         }
 
 	    private void DrawCrosshair(GameTime gameTime, SpriteBatch spriteBatch)
@@ -239,46 +233,6 @@ namespace WindowsGSM1
 
 			spriteBatch.End();
 	    }
-
-	    private void DrawHud(SpriteBatch spriteBatch)
-        {
-            Vector2 hudLocation = _camera.TitleSafeArea;
-	        Vector2 center = _camera.Position;
-
-	        string hudString = _gameEngine.HUDString;
-
-			spriteBatch.Begin(SpriteSortMode.BackToFront, null, null, null, null, null, _camera.Transform);
-
-			DrawShadowedString(hudFont, hudString, hudLocation, Color.Yellow);
-
-            // Draw score
-			float timeHeight = hudFont.MeasureString(hudString).Y;
-            DrawShadowedString(hudFont, "SCORE: " + _gameEngine.Score.ToString(), hudLocation + new Vector2(0.0f, timeHeight * 1.2f), Color.Yellow);
-
-            // Determine the status overlay message to show.
-            Texture2D status = null;
-            if (_gameEngine.Player.IsDead)
-            {
-                status = diedOverlay;
-            }
-
-            if (status != null)
-            {
-                // Draw status message.
-                Vector2 statusSize = new Vector2(status.Width, status.Height);
-                ScreenManager.SpriteBatch.Draw(status, center - statusSize / 2, Color.White);
-            }
-
-			spriteBatch.End();
-        }
-
-        private void DrawShadowedString(SpriteFont font, string value, Vector2 position, Color color)
-        {
-            ScreenManager.SpriteBatch.DrawString(font, value, position + new Vector2(1.0f, 1.0f), Color.Black);
-            ScreenManager.SpriteBatch.DrawString(font, value, position, color);
-        }
-
-
         #endregion
     }
 }

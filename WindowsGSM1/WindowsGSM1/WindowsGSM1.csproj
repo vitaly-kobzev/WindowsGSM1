@@ -84,6 +84,7 @@
     <Compile Include="Gameplay\CollidableGameObject.cs" />
     <Compile Include="Gameplay\Gem.cs" />
     <Compile Include="Gameplay\Engine.cs" />
+    <Compile Include="Gameplay\HUD.cs" />
     <Compile Include="Gameplay\Level.cs" />
     <Compile Include="Gameplay\GameObject.cs" />
     <Compile Include="Gameplay\Particles.cs" />

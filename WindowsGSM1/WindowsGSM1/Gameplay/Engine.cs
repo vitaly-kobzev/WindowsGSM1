@@ -29,6 +29,8 @@ namespace WindowsGSM1.Gameplay
 
 		public ICamera2D Camera { get; private set; }
 
+		public IHUD HUD { get; private set; }
+
         public GraphicsDevice GraphicsDevice { get; set; }
 
 		public Player Player { get; private set; }
@@ -74,13 +76,13 @@ namespace WindowsGSM1.Gameplay
             Content = new ContentManager(serviceProvider, "Content");
 
 			ExplosionMaster = explosionMaster;
-
-            HUDString = "HUD";
         }
 
-		public void Initialize(Stream fileStream, ICamera2D camera)
+		public void Initialize(Stream fileStream, ICamera2D camera, IHUD hud)
 		{
 			Camera = camera;
+
+			HUD = hud;
 
 			Level = new Level(this);
 
@@ -89,6 +91,12 @@ namespace WindowsGSM1.Gameplay
 			AddGameObjects(Level.LoadLevel(fileStream));
 
 			AddGameObject(Player = new Player(this, Level.StartLocation));
+			Player.PlayerDied += OnPlayerDied;
+		}
+
+		private void OnPlayerDied(object sender, EventArgs e)
+		{
+			HUD.SetStatus(HUDStatus.PlayerDied);
 		}
 
 		private void InitCrosshair()
@@ -163,7 +171,7 @@ namespace WindowsGSM1.Gameplay
 
                 // Falling off the bottom of the level kills the player.
                 if (Player.BoundingRectangle.Top >= Level.Height * Tile.Height)
-                    OnPlayerKilled();
+                    Player.Kill();
 
                 // The player has reached the exit if they are standing on the ground and
                 // his bounding rectangle contains the center of the exit tile.
@@ -222,18 +230,6 @@ namespace WindowsGSM1.Gameplay
 			}
 		}
 
-		/// <summary>
-        /// Called when the player is killed.
-        /// </summary>
-        /// <param name="killedBy">
-        /// The enemy who killed the player. This is null if the player was not killed by an
-        /// enemy, such as when a player falls into a hole.
-        /// </param>
-        private void OnPlayerKilled()
-        {
-            Player.OnKilled(null);
-        }
-
         /// <summary>
         /// Called when the player reaches the level's exit.
         /// </summary>
@@ -277,13 +273,6 @@ namespace WindowsGSM1.Gameplay
 		{
 			_crosshair.Draw(gameTime, spriteBatch);
 		}
-
-        public void PushToHUD(string str)
-        {
-            HUDString = str;
-        }
-
-        public string HUDString { get; private set; }
 
 		public bool IsInDebugMode
 		{

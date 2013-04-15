@@ -57,7 +57,7 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
-        public override void OnGotHit(HitData hitData)
+	    public override void OnGotHit(HitData hitData)
         {
             //var tile = new Tile(GeneratedTile, TileCollision.Impassable, _engine.Content.Load<Texture2D>("Sprites/wallhit"));
 
@@ -163,7 +163,7 @@ namespace WindowsGSM1.Gameplay
             spriteBatch.Draw(Texture, Position, null, Color.White, rotation, origin, 1.0f, SpriteEffects.None, 1);
         }
 
-	    public override void OnDead()
+		protected override void OnDead()
 	    {
 		    //same
 	    }

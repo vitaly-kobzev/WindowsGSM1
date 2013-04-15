@@ -57,12 +57,12 @@ namespace WindowsGSM1.Gameplay
             Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
         }
 
-        public override void OnDead()
+		protected override void OnDead()
         {
             
         }
 
-        public override void OnGotHit(HitData hitData)
+	    public override void OnGotHit(HitData hitData)
         {
             
         }

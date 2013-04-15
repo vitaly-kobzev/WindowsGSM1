@@ -36,7 +36,7 @@ namespace WindowsGSM1.Gameplay
             }
         }
 
-        public override void OnGotHit(HitData hitData)
+	    public override void OnGotHit(HitData hitData)
         {
 	        Kill();
         }
@@ -97,7 +97,7 @@ namespace WindowsGSM1.Gameplay
             spriteBatch.Draw(Texture, Position, null, Color.White, 0.0f, Origin, 1.0f, SpriteEffects.None, 1);
         }
 
-	    public override void OnDead()
+	    protected override void OnDead()
 	    {}
     }
 }
