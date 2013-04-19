@@ -66,7 +66,7 @@ namespace WindowsGSM1.Gameplay.Objects.Abstractions
             Collision = collision;
         }
 
-		public override void Update(GameTime gameTime, KeyboardState keyboardState)
+		public override void Update(GameTime gameTime)
 		{
 		}
 

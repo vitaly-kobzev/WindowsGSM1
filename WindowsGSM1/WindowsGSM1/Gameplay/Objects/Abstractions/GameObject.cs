@@ -1,4 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
@@ -6,7 +9,7 @@ using Microsoft.Xna.Framework.Input;
 using WindowsGSM1.Gameplay.Mechanics;
 using WindowsGSM1.Gameplay.Mechanics.StateData;
 
-namespace WindowsGSM1.Gameplay.Objects.Abstractions
+namespace WindowsGSM1.Gameplay
 {
 	/// <summary>
 	/// base class containing common properties
@@ -62,7 +65,7 @@ namespace WindowsGSM1.Gameplay.Objects.Abstractions
 
         public abstract void Initialize(ContentManager contentManager);
 
-        public abstract void Update(GameTime gameTime, KeyboardState keyboardState);
+        public abstract void Update(GameTime gameTime);
 
         protected abstract void DrawInternal(GameTime gameTime, SpriteBatch spriteBatch);
 

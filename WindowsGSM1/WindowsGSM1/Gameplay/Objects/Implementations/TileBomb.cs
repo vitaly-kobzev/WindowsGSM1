@@ -102,7 +102,7 @@ namespace WindowsGSM1.Gameplay.Objects.Implementations
 			LocalBounds = new Rectangle(left, top, width, height);
         }
 
-        protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
+        protected override void UpdateInternal(GameTime gameTime)
         {
             float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 

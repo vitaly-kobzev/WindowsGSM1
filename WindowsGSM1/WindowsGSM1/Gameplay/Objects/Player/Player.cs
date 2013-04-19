@@ -9,6 +9,7 @@ using WindowsGSM1.Gameplay.Mechanics;
 using WindowsGSM1.Gameplay.Mechanics.StateData;
 using WindowsGSM1.Gameplay.Objects.Abstractions;
 using WindowsGSM1.Gameplay.Objects.Implementations;
+using WindowsGSM1.Manager;
 
 namespace WindowsGSM1.Gameplay.Objects.Player
 {
@@ -26,10 +27,8 @@ namespace WindowsGSM1.Gameplay.Objects.Player
 		private const float AirDragFactor = 0.58f;
 
 		// Constants for controlling vertical movement
-		private const float MaxJumpTime = 0.35f;
+		private const float MaxJumpTime = 0.6f;
 		private const float JumpLaunchVelocity = -3500.0f;
-		private const float GravityAcceleration = 3400.0f;
-		private const float MaxFallSpeed = 550.0f;
 		private const float JumpControlPower = 0.14f;
 		#endregion
 
@@ -48,8 +47,6 @@ namespace WindowsGSM1.Gameplay.Objects.Player
 
 	    private AnimationPlayer _topAnimation;
 	    private AnimationPlayer _botAnimation;
-
-        Vector2 velocity;
 
         /// <summary>
         /// Gets whether or not the player's feet are on the ground.
@@ -72,7 +69,7 @@ namespace WindowsGSM1.Gameplay.Objects.Player
 
 		//gun data
 		private const int ShotDelay = 150;
-		private int ShotBuffer;
+	    private int ShotBuffer;
 		private bool isFiring;
 	    private double _gunRotation;
 
@@ -204,7 +201,6 @@ namespace WindowsGSM1.Gameplay.Objects.Player
         public void Reset(Vector2 position)
         {
             Position = position;
-            velocity = Vector2.Zero;
         }
 
         /// <summary>
@@ -215,11 +211,8 @@ namespace WindowsGSM1.Gameplay.Objects.Player
         /// once per frame. We also pass the game's orientation because when using the accelerometer,
         /// we need to reverse our motion when the orientation is in the LandscapeRight orientation.
         /// </remarks>
-        protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
+        protected override void UpdateInternal(GameTime gameTime)
         {
-			if(!IsDead)
-				GetInput(keyboardState);
-
             ShotBuffer += gameTime.ElapsedGameTime.Milliseconds;
 
             if (isFiring && ShotBuffer > ShotDelay)
@@ -227,8 +220,10 @@ namespace WindowsGSM1.Gameplay.Objects.Player
                 CreateBullet(GunPoint,_gunRotation, gameTime);
                 ShotBuffer = 0;
             }
-           
-            ApplyPhysics(gameTime);
+
+			//recalculate nesessary points 
+			_topOrigin = Position + _originDirectionalPart;
+			_stationaryGunPoint = Position + _gunPointDirectionalPart;
         }
 
 		protected Vector2 GunPoint { get; set; }
@@ -239,14 +234,14 @@ namespace WindowsGSM1.Gameplay.Objects.Player
 
             // If the collision stopped us from moving, reset the velocity to zero.
             if (Position.X == collisions.PositionBeforeUpdate.X)
-                velocity.X = 0;
+                Velocity.X = 0;
 
             if (Position.Y == collisions.PositionBeforeUpdate.Y)
-                velocity.Y = 0;
+                Velocity.Y = 0;
 
             if (!IsDead && IsOnGround)
             {
-                if (Math.Abs(velocity.X) - 0.02f > 0)
+                if (Math.Abs(Velocity.X) - 0.02f > 0)
                 {
 					//TODO run
 					_botAnimation.PlayAnimation(_lowerIdle);
@@ -268,8 +263,7 @@ namespace WindowsGSM1.Gameplay.Objects.Player
         /// <summary>
         /// Gets player horizontal movement and jump commands from input.
         /// </summary>
-        private void GetInput(
-            KeyboardState keyboardState)
+        private void GetInput(KeyboardState keyboardState, MouseState mouseState)
         {
 
             // Ignore small movements to prevent running in place.
@@ -281,7 +275,6 @@ namespace WindowsGSM1.Gameplay.Objects.Player
                 keyboardState.IsKeyDown(Keys.A))
             {
                 movement = -1.0f;
-	            //direction = -1;
             }
             else if (keyboardState.IsKeyDown(Keys.Right) ||
                      keyboardState.IsKeyDown(Keys.D))
@@ -289,46 +282,29 @@ namespace WindowsGSM1.Gameplay.Objects.Player
                 movement = 1.0f;
 
             }
-            isFiring = keyboardState.IsKeyDown(Keys.LeftControl);
+	        isFiring = mouseState.LeftButton == ButtonState.Pressed;
 
             // Check if the player wants to jump.
-            isJumping =
-               keyboardState.IsKeyDown(Keys.Space) ||
-                keyboardState.IsKeyDown(Keys.Up) ||
-                keyboardState.IsKeyDown(Keys.W);
+	        isJumping = keyboardState.IsKeyDown(Keys.Space) && !wasJumping;
         }
 
-        /// <summary>
-        /// Updates the player's velocity and position based on input, gravity, etc.
-        /// </summary>
-        private void ApplyPhysics(GameTime gameTime)
-        {
-            float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
+		protected override void ApplyPhysicsInternal(GameTime gameTime, float elapsed)
+		{
+			// Base velocity is a combination of horizontal movement control and
+			// acceleration downward due to gravity.
+			Velocity.X += movement * MoveAcceleration * elapsed;
 
-            // Base velocity is a combination of horizontal movement control and
-            // acceleration downward due to gravity.
-            velocity.X += movement * MoveAcceleration * elapsed;
-            velocity.Y = MathHelper.Clamp(velocity.Y + GravityAcceleration * elapsed, -MaxFallSpeed, MaxFallSpeed);
+			Velocity.Y = DoJump(Velocity.Y, gameTime);
 
-            velocity.Y = DoJump(velocity.Y, gameTime);
+			// Apply pseudo-drag horizontally.
+			if (IsOnGround)
+				Velocity.X *= GroundDragFactor;
+			else
+				Velocity.X *= AirDragFactor;
 
-            // Apply pseudo-drag horizontally.
-            if (IsOnGround)
-                velocity.X *= GroundDragFactor;
-            else
-                velocity.X *= AirDragFactor;
-
-            // Prevent the player from running faster than his top speed.            
-            velocity.X = MathHelper.Clamp(velocity.X, -MaxMoveSpeed, MaxMoveSpeed);
-
-            // Apply velocity.
-            Position += velocity * elapsed;
-            Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
-
-			//recalculate nesessary points 
-			_topOrigin = Position + _originDirectionalPart;
-			_stationaryGunPoint = Position + _gunPointDirectionalPart;
-        }
+			// Prevent the player from running faster than his top speed.            
+			Velocity.X = MathHelper.Clamp(Velocity.X, -MaxMoveSpeed, MaxMoveSpeed);
+		}
 
         /// <summary>
         /// Calculates the Y velocity accounting for jumping and
@@ -455,5 +431,11 @@ namespace WindowsGSM1.Gameplay.Objects.Player
 
 			return bomb;
 		}
+
+	    public void HanleInput(InputState input)
+	    {
+			if(!IsDead)
+				GetInput(Keyboard.GetState(),Mouse.GetState());
+	    }
     }
 }

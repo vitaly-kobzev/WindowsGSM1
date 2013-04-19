@@ -18,6 +18,7 @@ using Microsoft.Xna.Framework.Input;
 using WindowsGSM1.Gameplay.Objects.Abstractions;
 using WindowsGSM1.Gameplay.Objects.Implementations;
 using WindowsGSM1.Gameplay.Objects.Player;
+using WindowsGSM1.Manager;
 
 namespace WindowsGSM1.Gameplay.Mechanics
 {
@@ -164,7 +165,7 @@ namespace WindowsGSM1.Gameplay.Mechanics
             if (Player.IsDead)
             {
                 // Still want to perform physics on the player.
-                Player.Update(gameTime,keyboardState);
+                Player.Update(gameTime);
             }
             else
             {
@@ -210,7 +211,7 @@ namespace WindowsGSM1.Gameplay.Mechanics
 			foreach (var obj in _gameObjects)
 			{
 				if (!obj.IsDead)
-					obj.Update(gameTime, keyboardState);
+					obj.Update(gameTime);
 				else
 				{
 					deadObjects.Add(obj);
@@ -264,6 +265,11 @@ namespace WindowsGSM1.Gameplay.Mechanics
         }
 
         #endregion
+
+		public void HandleInput(InputState input)
+		{
+			Player.HanleInput(input);
+		}
 
 		public IEnumerable<CollidableGameObject> GetCollidables()
 		{

@@ -75,7 +75,7 @@ namespace WindowsGSM1.Gameplay.Objects.Implementations
             
         }
 
-        protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
+        protected override void UpdateInternal(GameTime gameTime)
         {
             ApplyPhysics(gameTime);
         }

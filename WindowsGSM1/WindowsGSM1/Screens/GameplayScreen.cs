@@ -164,7 +164,7 @@ namespace WindowsGSM1.Screens
         /// </summary>
         public override void HandleInput(InputState input)
         {
-			keyboardState = Keyboard.GetState();
+			_gameEngine.HandleInput(input);
         }
 
 

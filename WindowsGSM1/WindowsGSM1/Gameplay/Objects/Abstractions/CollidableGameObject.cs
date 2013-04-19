@@ -25,6 +25,8 @@ namespace WindowsGSM1.Gameplay.Objects.Abstractions
 
 	    private Color[] _textureData;
 
+	    protected Vector2 Velocity;
+
 		public override Texture2D Texture
 		{
 			get
@@ -56,17 +58,43 @@ namespace WindowsGSM1.Gameplay.Objects.Abstractions
 			CollCheckLevel = collisionCheck;
 		}
 
-        protected abstract void UpdateInternal(GameTime gameTime, KeyboardState keyboardState);
+	    protected abstract void UpdateInternal(GameTime gameTime);
+	    protected virtual void ApplyPhysicsInternal(GameTime gameTime, float elapsed)
+	    {
+		    //do nothing is base class
+	    }
 
-		protected abstract void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions);
+		/// <summary>
+		/// Applies gravity forces to the object (modifies only 'Y' part of the vector)
+		/// Override if you dont want your object to be affected by gravity
+		/// </summary>
+		/// <param name="gameTime"></param>
+		protected virtual void ApplyPhysics(GameTime gameTime)
+	    {
+			float elapsed = (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-        public override void Update(GameTime gameTime, KeyboardState keyboardState)
+			Velocity.Y = Velocity.Y + Gravity.GravityAcceleration*elapsed;
+
+			ApplyPhysicsInternal(gameTime, elapsed);
+
+			Velocity.Y = MathHelper.Clamp(Velocity.Y, -Gravity.MaxFallSpeed, Gravity.MaxFallSpeed);
+
+			// Apply velocity.
+			Position += Velocity * elapsed;
+			Position = new Vector2((float)Math.Round(Position.X), (float)Math.Round(Position.Y));
+	    }
+
+	    protected abstract void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions);
+
+        public override void Update(GameTime gameTime)
         {
             //flow of update is:
             //save initial position
             _positionBeforeUpdate = Position;
+			//apply physics
+			ApplyPhysics(gameTime);
             //do any kind of adjustments
-            UpdateInternal(gameTime, keyboardState);
+            UpdateInternal(gameTime);
             //do collision check
             var collisions = DoCollisionCheck();
             //let collisions to be handled in a custom way

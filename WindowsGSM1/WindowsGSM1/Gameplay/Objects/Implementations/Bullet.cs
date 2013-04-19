@@ -57,12 +57,12 @@ namespace WindowsGSM1.Gameplay.Objects.Implementations
             Texture = content.Load<Texture2D>("Sprites/Bullet");
         }
 
-        protected override void UpdateInternal(GameTime gameTime, KeyboardState keyboardState)
+        protected override void UpdateInternal(GameTime gameTime)
         {
             ApplyPhysics(gameTime);
         }
 
-        protected override void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions)
+	    protected override void HandleCollisionsInternal(GameTime gameTime, CollisionCheckResult collisions)
         {
 			if (collisions.HitImpassable)
 			{
@@ -77,7 +77,7 @@ namespace WindowsGSM1.Gameplay.Objects.Implementations
 			}
         }
 
-        public void ApplyPhysics(GameTime gameTime)
+        protected override void ApplyPhysics(GameTime gameTime)
         {
             float elapsed = (float) gameTime.ElapsedGameTime.TotalSeconds;
 
